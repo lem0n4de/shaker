@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>scraper.py</file>
+        <file>lessons.json</file>
+    </qresource>
+</RCC>
