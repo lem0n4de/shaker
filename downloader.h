@@ -22,6 +22,7 @@ class Downloader : public QObject
         void downloadFinished(DownloadData data);
         void downloadProgress(DownloadData data);
         void downloadError(DownloadData data);
+        void downloadStarted(DownloadData data);
 
     private:
         std::vector<DownloadData*> v_download_data;

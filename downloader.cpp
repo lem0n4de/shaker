@@ -11,8 +11,10 @@ Downloader::~Downloader()
 {
     aria2::libraryDeinit();
     for (auto d: this->v_download_data) {
-        if (d != nullptr)
+        if (d != nullptr) {
             delete d;
+            d = nullptr;
+        }
     }
 }
 
@@ -22,6 +24,14 @@ int Downloader::aria2_downloadEventCallback(aria2::Session* session, aria2::Down
     DownloadData* data;
     switch(event) {
     case aria2::EVENT_ON_DOWNLOAD_START:
+        data = downloader->filter_download_data_by_gid(gid);
+        if (data != nullptr) {
+            data->download_speed = 0;
+            data->completed_length = 0;
+            data->total_length = 0;
+            data->percentage = 0;
+            emit downloader->downloadStarted(*data);
+        }
         break;
     case aria2::EVENT_ON_DOWNLOAD_PAUSE:
         break;
@@ -114,6 +124,7 @@ void Downloader::download(std::vector<Video*> videos)
                     data->total_length = dh->getTotalLength();
                     data->download_speed = dh->getDownloadSpeed();
                     data->percentage = (double)data->completed_length / (double) data->total_length * 100.0;
+                    qDebug() << "emit downloadProgress(*data)";
                     emit downloadProgress(*data);
                 }
             }
