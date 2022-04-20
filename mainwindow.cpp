@@ -20,11 +20,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     this->loadLessonsFromFile();
 
+    this->download_list_dialog = new DownloadListDialog;
+
     this->downloader.moveToThread(&this->worker_thread);
     connect(&this->worker_thread, &QThread::finished, &this->downloader, &QObject::deleteLater);
-    connect(&this->downloader, &Downloader::downloadFinished, this, &MainWindow::on_downloader_download_finished);
-    connect(&this->downloader, &Downloader::downloadProgress, this, &MainWindow::on_downloader_download_progress);
+    connect(&this->downloader, &Downloader::downloadProgress, this->download_list_dialog, &DownloadListDialog::download_progress);
+    connect(&this->downloader, &Downloader::downloadFinished, this->download_list_dialog, &DownloadListDialog::download_finished);
     connect(this, &MainWindow::start_download, &this->downloader, &Downloader::download);
+    connect(this, &MainWindow::start_download, this->download_list_dialog, &DownloadListDialog::download_started);
     this->worker_thread.start();
 
     for (Lesson* lesson : this->lessons) {
@@ -137,19 +140,8 @@ void MainWindow::on_download_button_clicked()
     }
 }
 
-void MainWindow::on_downloader_download_finished(DownloadData data)
+void MainWindow::closeEvent(QCloseEvent* event)
 {
-    qDebug() << "MainWindow::on_downloader_download_finished";
-}
-
-void MainWindow::on_downloader_download_progress(DownloadData data)
-{
-    qDebug() << QString::fromStdString(aria2::gidToHex(data.gid));
-    qDebug() << QString::fromStdString(data.file_path);
-    qDebug() << "Completed Length: " << data.completed_length/1024;
-    qDebug() << "Total Length: " << data.total_length/1024;
-    qDebug() << "Percentage: " << data.percentage;
-    qDebug() << "Download Speed: " << data.download_speed / 1024 << "KiB/s";
-
+    this->downloader.on_program_exit();
 }
 

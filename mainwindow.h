@@ -6,6 +6,7 @@
 #include <QThread>
 #include <lesson.h>
 #include <downloader.h>
+#include <downloadlistdialog.h>
 #include <aria2/aria2.h>
 
 QT_BEGIN_NAMESPACE
@@ -27,8 +28,6 @@ class MainWindow : public QMainWindow
         void on_list_item_state_changed(QListWidgetItem* item);
 
         void on_download_button_clicked();
-        void on_downloader_download_finished(DownloadData data);
-        void on_downloader_download_progress(DownloadData data);
     signals:
         void start_download(std::vector<Video*> videos);
 
@@ -39,6 +38,8 @@ class MainWindow : public QMainWindow
         aria2::Session* aria2_session;
         QThread worker_thread;
         Downloader downloader;
+        void closeEvent(QCloseEvent *event);
         void loadLessonsFromFile();
+        DownloadListDialog* download_list_dialog;
 };
 #endif // MAINWINDOW_H

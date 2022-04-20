@@ -107,7 +107,7 @@ void Downloader::download(std::vector<Video*> videos)
 
     for (;;) {
         rv = aria2::run(session, aria2::RUN_ONCE);
-        if (rv != 1) {
+        if (rv != 1 || cancel) {
             break;
         }
         std::vector<aria2::A2Gid> gids = aria2::getActiveDownload(session);
@@ -124,10 +124,14 @@ void Downloader::download(std::vector<Video*> videos)
                     data->total_length = dh->getTotalLength();
                     data->download_speed = dh->getDownloadSpeed();
                     data->percentage = (double)data->completed_length / (double) data->total_length * 100.0;
-                    qDebug() << "emit downloadProgress(*data)";
                     emit downloadProgress(*data);
                 }
             }
         }
     }
+}
+
+void Downloader::on_program_exit()
+{
+    this->cancel = true;
 }

@@ -17,6 +17,7 @@ class Downloader : public QObject
 
     public slots:
         void download(std::vector<Video*> videos);
+        void on_program_exit();
 
     signals:
         void downloadFinished(DownloadData data);
@@ -26,6 +27,7 @@ class Downloader : public QObject
 
     private:
         std::vector<DownloadData*> v_download_data;
+        bool cancel;
 };
 
 #endif // DOWNLOADER_H
