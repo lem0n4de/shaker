@@ -19,11 +19,15 @@ class DownloadListDialog : public QDialog
         explicit DownloadListDialog(QWidget *parent = nullptr);
         ~DownloadListDialog();
 
+    protected:
+        void closeEvent(QCloseEvent* event) override;
     private:
+        bool started;
         Ui::DownloadListDialog *ui;
         std::vector<Video*> videos;
         std::vector<std::pair<QTableWidgetItem*, QProgressBar*>> widgets;
         std::pair<QTableWidgetItem*, QProgressBar*> findRowByName(QString name);
+        std::vector<Video*> append_videos(std::vector<Video*> videos);
 
     public slots:
         void download_started(std::vector<Video*> videos);

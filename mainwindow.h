@@ -39,7 +39,7 @@ class MainWindow : public QMainWindow
         aria2::Session* aria2_session;
         QThread worker_thread;
         Downloader downloader;
-        void closeEvent(QCloseEvent *event);
+        void closeEvent(QCloseEvent *event) override;
         void loadLessonsFromFile();
         QListWidget* buildListWidgetForLesson(Lesson* lesson, QString objectName = nullptr);
         DownloadListDialog* download_list_dialog;

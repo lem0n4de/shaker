@@ -76,13 +76,10 @@ void Downloader::download(std::vector<Video*> videos)
     aria2::SessionConfig config;
     config.userData = this;
     aria2::KeyVals options;
-    qDebug() << "options created";
     options.push_back(std::pair<std::string, std::string>("split", "16"));
     options.push_back(std::pair<std::string, std::string>("max-connection-per-server", "16"));
-    qDebug() << "downloadCallback added";
     config.downloadEventCallback = Downloader::aria2_downloadEventCallback;
     session = aria2::sessionNew(options, config);
-    qDebug() << "Aria2 session created";
 
     int rv;
     for (auto video: videos) {
@@ -101,9 +98,6 @@ void Downloader::download(std::vector<Video*> videos)
         auto d = new DownloadData(gid, video, out, -1, -1, -1, -1);
         this->v_download_data.push_back(d);
     }
-
-    qDebug() << "v_download_data is ready";
-
 
     for (;;) {
         rv = aria2::run(session, aria2::RUN_ONCE);

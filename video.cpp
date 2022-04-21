@@ -7,3 +7,8 @@ Video::Video(const QString id, const QString name, const QString teacher, const 
     this->teacher = teacher;
     this->url = url;
 }
+
+bool Video::operator==(const Video& rhs)
+{
+    return this->id == rhs.id;
+}

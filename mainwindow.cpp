@@ -20,18 +20,15 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     this->loadLessonsFromFile();
-
-    this->download_list_dialog = new DownloadListDialog;
-
+    this->download_list_dialog = new DownloadListDialog(this);
     this->downloader.moveToThread(&this->worker_thread);
-    connect(&this->worker_thread, &QThread::finished, &this->downloader, &QObject::deleteLater);
     connect(&this->downloader, &Downloader::downloadProgress, this->download_list_dialog, &DownloadListDialog::download_progress);
     connect(&this->downloader, &Downloader::downloadFinished, this->download_list_dialog, &DownloadListDialog::download_finished);
-    connect(this, &MainWindow::start_download, &this->downloader, &Downloader::download);
     connect(this, &MainWindow::start_download, this->download_list_dialog, &DownloadListDialog::download_started);
+    connect(this, &MainWindow::start_download, &this->downloader, &Downloader::download);
+    connect(&this->worker_thread, &QThread::finished, &this->downloader, &QObject::deleteLater);
     this->worker_thread.start();
 
-    // FILTER ACCORDING TO LESSON NAMES AND ADD DIALOG BOX
     QStringList lesson_names;
     for (auto lesson: this->lessons) {
         auto f = lesson_names.filter(lesson->name);
@@ -173,7 +170,6 @@ void MainWindow::on_list_item_state_changed(QListWidgetItem* item)
 void MainWindow::on_download_button_clicked()
 {
     if (!videos_to_download.empty()) {
-        qDebug() << "Found " << videos_to_download.size() << " videos to download";
         emit start_download(videos_to_download);
     }
 }
@@ -186,13 +182,11 @@ void MainWindow::on_combobox_changed(QString text)
     auto lessons = Lesson::filter_by_teacher(l, text);
 
     if (lessons.size() != 1) {
-        qDebug() << "TOO MANY OR TOO FEW LESSONS. Size: " << lessons.size() << " Name: " << t << " Teacher: " << text;
         return;
     }
     auto lesson = lessons[0];
     QListWidget* listW = ui->tabWidget->findChild<QListWidget*>(lesson->name + "list");
     if (listW == nullptr) {
-        qDebug() << "LIST WIDGET NOT FOUND";
         return;
     }
     listW->clear();
