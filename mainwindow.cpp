@@ -10,6 +10,7 @@
 #include <QMessageBox>
 #include <QWebEngineView>
 #include <iostream>
+#include <QComboBox>
 
 using namespace std::string_literals;
 
@@ -30,17 +31,37 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::start_download, this->download_list_dialog, &DownloadListDialog::download_started);
     this->worker_thread.start();
 
-    for (Lesson* lesson : this->lessons) {
-        QListWidget* l = new QListWidget;
-        for (Video* video : lesson->videos) {
-            QListWidgetItem* item = new QListWidgetItem;
-            item->setText(video->name);
-            item->setCheckState(Qt::CheckState::Unchecked);
-            l->addItem(item);
-        }
-        connect(l, &QListWidget::itemChanged, this, &MainWindow::on_list_item_state_changed);
+    // FILTER ACCORDING TO LESSON NAMES AND ADD DIALOG BOX
+    QStringList lesson_names;
+    for (auto lesson: this->lessons) {
+        auto f = lesson_names.filter(lesson->name);
+        if (f.empty()) lesson_names.append(lesson->name);
+    }
 
-        ui->tabWidget->addTab(l, lesson->name);
+    for (const auto &name : lesson_names) {
+        auto v = Lesson::filter_by_name(this->lessons, name);
+        if (!v.empty()) {
+            if (v.size() > 1) {
+                // multiple teachers
+                QVBoxLayout* layout = new QVBoxLayout;
+                QComboBox* comboBox = new QComboBox;
+                for (auto&& lesson: v) {
+                    comboBox->addItem(lesson->teacher);
+                }
+                connect(comboBox, &QComboBox::currentTextChanged, this, &MainWindow::on_combobox_changed);
+                QListWidget* l = this->buildListWidgetForLesson(v[0]);
+                layout->addWidget(comboBox);
+                layout->addWidget(l);
+                QWidget* w = new QWidget;
+                w->setLayout(layout);
+                ui->tabWidget->addTab(w, name);
+            } else {
+                // single teacher
+                auto lesson = v[0];
+                auto l = this->buildListWidgetForLesson(lesson);
+                ui->tabWidget->addTab(l, lesson->name);
+            }
+        }
     }
 }
 
@@ -92,6 +113,23 @@ void MainWindow::loadLessonsFromFile()
     inputFile.close();
 }
 
+QListWidget* MainWindow::buildListWidgetForLesson(Lesson* lesson, QString objectName)
+{
+    QListWidget* l = new QListWidget;
+    for (Video* video : lesson->videos) {
+        QListWidgetItem* item = new QListWidgetItem;
+        item->setText(video->name);
+        item->setCheckState(Qt::CheckState::Unchecked);
+        l->addItem(item);
+    }
+    if (objectName == nullptr) {
+        objectName = lesson->name + "list";
+    }
+    l->setObjectName(objectName);
+    connect(l, &QListWidget::itemChanged, this, &MainWindow::on_list_item_state_changed);
+    return l;
+}
+
 
 void MainWindow::on_actionExit_triggered()
 {
@@ -137,6 +175,32 @@ void MainWindow::on_download_button_clicked()
     if (!videos_to_download.empty()) {
         qDebug() << "Found " << videos_to_download.size() << " videos to download";
         emit start_download(videos_to_download);
+    }
+}
+
+void MainWindow::on_combobox_changed(QString text)
+{
+    int i = ui->tabWidget->currentIndex();
+    QString t = ui->tabWidget->tabText(i);
+    auto l = Lesson::filter_by_name(this->lessons, t);
+    auto lessons = Lesson::filter_by_teacher(l, text);
+
+    if (lessons.size() != 1) {
+        qDebug() << "TOO MANY OR TOO FEW LESSONS. Size: " << lessons.size() << " Name: " << t << " Teacher: " << text;
+        return;
+    }
+    auto lesson = lessons[0];
+    QListWidget* listW = ui->tabWidget->findChild<QListWidget*>(lesson->name + "list");
+    if (listW == nullptr) {
+        qDebug() << "LIST WIDGET NOT FOUND";
+        return;
+    }
+    listW->clear();
+    for (auto&& video: lesson->videos) {
+        QListWidgetItem* item = new QListWidgetItem;
+        item->setText(video->name);
+        item->setCheckState(Qt::CheckState::Unchecked);
+        listW->addItem(item);
     }
 }
 

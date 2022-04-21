@@ -28,6 +28,7 @@ class MainWindow : public QMainWindow
         void on_list_item_state_changed(QListWidgetItem* item);
 
         void on_download_button_clicked();
+        void on_combobox_changed(QString text);
     signals:
         void start_download(std::vector<Video*> videos);
 
@@ -40,6 +41,7 @@ class MainWindow : public QMainWindow
         Downloader downloader;
         void closeEvent(QCloseEvent *event);
         void loadLessonsFromFile();
+        QListWidget* buildListWidgetForLesson(Lesson* lesson, QString objectName = nullptr);
         DownloadListDialog* download_list_dialog;
 };
 #endif // MAINWINDOW_H

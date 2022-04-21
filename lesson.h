@@ -2,6 +2,8 @@
 #define LESSON_H
 
 #include <QObject>
+#include <QDebug>
+#include <functional>
 #include <video.h>
 
 class Lesson : public QObject
@@ -12,10 +14,19 @@ class Lesson : public QObject
         QString name;
         std::vector<Video*> videos;
         Lesson(const QString id, const QString name, const QString teacher);
+        static std::vector<Lesson*> filter_by_name(std::vector<Lesson*> lessons, QString name);
+        static std::vector<Lesson*> filter_by_teacher(std::vector<Lesson*> lessons, QString teacher);
     signals:
 
     private:
         QString id;
 };
+
+QDebug inline operator<<(QDebug d, const Lesson* f) {
+    QDebug nsp = d.nospace();
+    nsp << "Lesson(name=" << f->name << ", teacher=" << f->teacher << ", video_size=" << f->videos.size();
+    nsp << "\n";
+    return nsp;
+}
 
 #endif // LESSON_H
