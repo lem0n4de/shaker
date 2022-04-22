@@ -72,14 +72,15 @@ DownloadData* Downloader::filter_download_data_by_gid(aria2::A2Gid gid)
 
 void Downloader::download(std::vector<Video*> videos)
 {
-    aria2::Session* session;
-    aria2::SessionConfig config;
-    config.userData = this;
-    aria2::KeyVals options;
-    options.push_back(std::pair<std::string, std::string>("split", "16"));
-    options.push_back(std::pair<std::string, std::string>("max-connection-per-server", "16"));
-    config.downloadEventCallback = Downloader::aria2_downloadEventCallback;
-    session = aria2::sessionNew(options, config);
+    if (this->aria2_session == nullptr) {
+        aria2::SessionConfig config;
+        config.userData = this;
+        aria2::KeyVals options;
+        options.push_back(std::pair<std::string, std::string>("split", "16"));
+        options.push_back(std::pair<std::string, std::string>("max-connection-per-server", "16"));
+        config.downloadEventCallback = Downloader::aria2_downloadEventCallback;
+        this->aria2_session = aria2::sessionNew(options, config);
+    }
 
     int rv;
     for (auto video: videos) {
@@ -90,7 +91,7 @@ void Downloader::download(std::vector<Video*> videos)
         d_opts.push_back(std::pair<std::string, std::string>("out", out));
         d_opts.push_back(std::pair<std::string, std::string>("header", "referer: https://tusworld.com.tr/VideoGrupDersleri"));
         auto gid = aria2::hexToGid(video->id.toStdString());
-        rv = aria2::addUri(session, &gid, uris, d_opts);
+        rv = aria2::addUri(this->aria2_session, &gid, uris, d_opts);
         if (rv <0) {
             qCritical() << "Failed to add downloads.";
             return;
@@ -100,13 +101,13 @@ void Downloader::download(std::vector<Video*> videos)
     }
 
     for (;;) {
-        rv = aria2::run(session, aria2::RUN_ONCE);
+        rv = aria2::run(this->aria2_session, aria2::RUN_ONCE);
         if (rv != 1 || cancel) {
             break;
         }
-        std::vector<aria2::A2Gid> gids = aria2::getActiveDownload(session);
+        std::vector<aria2::A2Gid> gids = aria2::getActiveDownload(this->aria2_session);
         for (const auto& gid: gids) {
-            aria2::DownloadHandle* dh = aria2::getDownloadHandle(session, gid);
+            aria2::DownloadHandle* dh = aria2::getDownloadHandle(this->aria2_session, gid);
             if (dh) {
                 auto it = std::find_if(this->v_download_data.begin(), this->v_download_data.end(), [gid](DownloadData* d) {
                     return d->gid == gid;
