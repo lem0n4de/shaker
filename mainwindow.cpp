@@ -198,3 +198,9 @@ void MainWindow::closeEvent(QCloseEvent* event)
 {
 }
 
+
+void MainWindow::on_action_show_download_list_dialog_triggered()
+{
+    this->download_list_dialog->show();
+}
+

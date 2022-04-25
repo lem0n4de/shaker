@@ -45,6 +45,9 @@
      <string>Dosya</string>
     </property>
     <addaction name="actionUpdate_List"/>
+    <addaction name="action_change_download_location"/>
+    <addaction name="action_show_download_list_dialog"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
    <addaction name="menuDosya"/>
@@ -58,6 +61,16 @@
   <action name="actionExit">
    <property name="text">
     <string>Çıkış</string>
+   </property>
+  </action>
+  <action name="action_show_download_list_dialog">
+   <property name="text">
+    <string>İndirilenler</string>
+   </property>
+  </action>
+  <action name="action_change_download_location">
+   <property name="text">
+    <string>İndirme konumunu değiştir</string>
    </property>
   </action>
  </widget>
