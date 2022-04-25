@@ -1,13 +1,24 @@
 #include "downloader.h"
 #include <QDebug>
 #include <QFile>
+#include <QDir>
 
 Downloader::Downloader()
 {
 }
 
+Downloader::Downloader(QString download_folder)
+{
+    this->download_folder = download_folder;
+}
+
 Downloader::~Downloader()
 {
+}
+
+void Downloader::set_download_folder(QString folder)
+{
+    this->download_folder = folder;
 }
 
 void Downloader::add_download(QList<QPointer<Video>> videos)
@@ -51,7 +62,8 @@ void Downloader::download()
 {
     for (const auto& item: this->queue) {
         QPointer<Video> video = this->queue.dequeue();
-        QString filename = video->name + ".mp4";
+        QDir dir(this->download_folder);
+        QString filename = dir.absoluteFilePath(video->name + ".mp4");
         QPointer<QFile> file = new QFile(filename);
         if (!file->open(QIODevice::WriteOnly)) {
             qDebug() << "Error opening file: " << filename;

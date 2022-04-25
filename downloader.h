@@ -16,7 +16,9 @@ class Downloader : public QObject
         Q_OBJECT
     public:
         Downloader();
+        Downloader(QString download_folder);
         ~Downloader();
+        void set_download_folder(QString folder);
 
     public slots:
         void add_download(QList<QPointer<Video>> videos);
@@ -33,6 +35,7 @@ class Downloader : public QObject
         void downloadStarted(QPointer<DownloadInfo> data);
 
     private:
+        QString download_folder;
         QNetworkAccessManager manager;
         QQueue<QPointer<Video>> queue;
 //        QList<QPointer<Video>> queue;

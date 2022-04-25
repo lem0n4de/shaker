@@ -9,6 +9,8 @@
 #include <QListWidgetItem>
 #include <QMessageBox>
 #include <QWebEngineView>
+#include <QFileDialog>
+#include <QStandardPaths>
 #include <iostream>
 #include <QComboBox>
 
@@ -20,6 +22,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     this->loadLessonsFromFile();
+    // set default location to downloads folder
+    this->downloader.set_download_folder(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation));
     this->download_list_dialog = new DownloadListDialog(this);
 //    this->downloader.moveToThread(&this->worker_thread);
     connect(&this->downloader, &Downloader::downloadProgress, this->download_list_dialog, &DownloadListDialog::download_progress);
@@ -202,5 +206,16 @@ void MainWindow::closeEvent(QCloseEvent* event)
 void MainWindow::on_action_show_download_list_dialog_triggered()
 {
     this->download_list_dialog->show();
+}
+
+
+void MainWindow::on_action_change_download_location_triggered()
+{
+    auto folder = QFileDialog::getExistingDirectory(this,
+                                                    tr("İndirme lokasyonu seçin"),
+                                                    QStandardPaths::writableLocation(QStandardPaths::DownloadLocation),
+                                                    QFileDialog::ShowDirsOnly
+                                                    | QFileDialog::DontResolveSymlinks);
+    this->downloader.set_download_folder(folder);
 }
 

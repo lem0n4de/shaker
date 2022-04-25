@@ -6,6 +6,7 @@
 #include <QThread>
 #include <QPointer>
 #include <QList>
+#include <QStandardPaths>
 #include <lesson.h>
 #include <downloader.h>
 #include <downloadlistdialog.h>
@@ -29,6 +30,8 @@ class MainWindow : public QMainWindow
         void on_download_button_clicked();
         void combobox_changed(QString text);
         void on_action_show_download_list_dialog_triggered();
+
+        void on_action_change_download_location_triggered();
 
     signals:
         void start_download(QList<QPointer<Video>> videos);
