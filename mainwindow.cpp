@@ -30,7 +30,7 @@ MainWindow::MainWindow(QWidget *parent)
 //    this->worker_thread.start();
 
     QStringList lesson_names;
-    for (auto lesson: this->lessons) {
+    for (const auto& lesson: this->lessons) {
         auto f = lesson_names.filter(lesson->name);
         if (f.empty()) lesson_names.append(lesson->name);
     }
@@ -157,14 +157,8 @@ void MainWindow::on_list_item_state_changed(QListWidgetItem* item)
     }
     else if (item->checkState() == Qt::CheckState::Unchecked) {
         int rv = this->videos_to_download.removeIf([item] (QPointer<Video> v) { return v->name == item->text(); });
-        if (rv>0)
-            qDebug() << "Removed " << item->text() << " from download list";
-//        for (int i = 0; i<this->videos_to_download.size(); i++) {
-//            if (this->videos_to_download[i]->name == item->text()) {
-//                this->videos_to_download.erase(this->videos_to_download.begin()+i-1);
-//                break;
-//            }
-//        }
+//        if (rv>0)
+//            qDebug() << "Removed " << item->text() << " from download list";
     }
 }
 
@@ -172,7 +166,6 @@ void MainWindow::on_list_item_state_changed(QListWidgetItem* item)
 void MainWindow::on_download_button_clicked()
 {
     if (!videos_to_download.empty()) {
-        qDebug() << "SIZE OF CHECKED ITEMS: " << videos_to_download.size();
         emit start_download(videos_to_download);
     }
 }

@@ -22,7 +22,6 @@ class Downloader : public QObject
         void add_download(QList<QPointer<Video>> videos);
 
     private slots:
-        void on_download_progress(qint64 bytes_received, qint64 bytes_total);
         void on_download_progress(QPointer<DownloadInfo> info);
         void on_download_finished(QPointer<DownloadInfo> info);
         void on_download_ready_read(QPointer<DownloadInfo> info);

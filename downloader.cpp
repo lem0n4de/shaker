@@ -18,34 +18,26 @@ void Downloader::add_download(QList<QPointer<Video>> videos)
                                [video](QPointer<DownloadInfo> info) { return info->video == video; });
         if (it == this->downloading.end()) {
             // not found, its not downloading
-            qDebug() << "Adding " << video->name << " to queue";
+//            qDebug() << "Adding " << video->name << " to queue";
             this->queue.enqueue(video);
         } else {
-            qDebug() << video->id << "\n" << video->name << "\n" << "ALREADY DOWNLOADING";
+//            qDebug() << video->id << "\n" << video->name << "\n" << "ALREADY DOWNLOADING";
         }
     }
-
-    qDebug() << "CALLING DOWNLOAD";
     download();
-}
-
-void Downloader::on_download_progress(qint64 bytes_received, qint64 bytes_total)
-{
-    qDebug() << "Bytes received: " << bytes_received << "\n" << "Total bytes: " << bytes_total;
 }
 
 void Downloader::on_download_progress(QPointer<DownloadInfo> info)
 {
-//    qDebug() << "NAME: " << info.video->name
-//             << "\nPercentage: " << info.percentage
-//             << "\nTotal length: " << info.total_length
-//             << "\nCompleted Length: " << info.completed_length;
+    emit downloadProgress(info);
 }
 
 void Downloader::on_download_finished(QPointer<DownloadInfo> info)
 {
     qDebug() << "Download finished: " << info->response->url();
     info->file->close();
+    info->completed_length = info->total_length;
+    emit this->downloadFinished(info);
 }
 
 void Downloader::on_download_ready_read(QPointer<DownloadInfo> info)
@@ -56,18 +48,14 @@ void Downloader::on_download_ready_read(QPointer<DownloadInfo> info)
 void Downloader::download()
 {
     if (this->queue.isEmpty()){
-        qDebug() << "EMPTY QUEUE";
+//        qDebug() << "Empty queue";
         return;
     }
 
-    qDebug() << "1";
     for (const auto& item: this->queue) {
         QPointer<Video> video = this->queue.dequeue();
-        QString filename = video->name.append(".mp4");
-        qDebug() << "Starting download of: " << filename;
+        QString filename = video->name + ".mp4";
         QPointer<QFile> file = new QFile(filename);
-
-        qDebug() << "2";
         if (!file->open(QIODevice::WriteOnly)) {
             qDebug() << "Error opening file: " << filename;
             return;
@@ -75,11 +63,9 @@ void Downloader::download()
 
         QNetworkRequest request(video->url);
         request.setRawHeader("referer", "https://tusworld.com.tr/VideoGrupDersleri");
-        qDebug() << "3";
 
         QPointer<QNetworkReply> reply = this->manager.get(request);
         QPointer<DownloadInfo> download_info = new DownloadInfo(video, file, reply);
-        qDebug() << "4";
         /*
          * Somehow calculate speed.
          * Add timer to DownloadInfo, but it probably needs the usage of a single object,
@@ -90,16 +76,12 @@ void Downloader::download()
             download_info->completed_length = bytesReceived / 1024;
             download_info->download_speed = 0;
             this->on_download_progress(download_info);
-        }); // &Downloader::on_download_progress);
+        });
         connect(&this->manager, &QNetworkAccessManager::finished, this, [this, download_info] () {this->on_download_finished(download_info); });
         connect(reply, &QNetworkReply::readyRead, this, [this, download_info] () { this->on_download_ready_read(download_info); });
-
-        qDebug() << "5";
         this->downloading.push_back(download_info);
-        qDebug() << "6";
         // speed = (bytes of data) / (time elapsed)
     }
-    qDebug() << "END OF DOWNLOAD";
 }
 
 

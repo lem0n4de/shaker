@@ -38,8 +38,8 @@ std::pair<QTableWidgetItem*, QProgressBar*> DownloadListDialog::findRowByName(QS
 QList<QPointer<Video>> DownloadListDialog::append_videos(QList<QPointer<Video>> videos)
 {
     QList<QPointer<Video>> difference;
-    for (auto&& v : videos) {
-        auto it = std::find_if(this->videos.begin(), this->videos.end(), [v](Video* video) { return video->id == v->id; });
+    for (const auto& v : videos) {
+        auto it = std::find_if(this->videos.begin(), this->videos.end(), [v](QPointer<Video> video) { return video->id == v->id; });
         if (it == this->videos.end()) {
             // not found
             this->videos.push_back(v);
@@ -75,18 +75,18 @@ void DownloadListDialog::download_started(QList<QPointer<Video>> videos)
     this->show();
 }
 
-void DownloadListDialog::download_progress(QPointer<DownloadInfo> data)
+void DownloadListDialog::download_progress(QPointer<DownloadInfo> info)
 {
-//    auto p = this->findRowByName(data.video->name);
-//    if (p.first == nullptr || p.second == nullptr) return;
-//    p.second->setValue(data.percentage);
+    auto p = this->findRowByName(info->video->name);
+    if (p.first == nullptr || p.second == nullptr) return;
+    p.second->setValue((int) info->percentage());
 }
 
-void DownloadListDialog::download_finished(QPointer<DownloadInfo> data)
+void DownloadListDialog::download_finished(QPointer<DownloadInfo> info)
 {
-//    auto p = this->findRowByName(data.video->name);
-//    if (p.first == nullptr || p.second == nullptr) return;
-//    p.second->setValue(100);
+    auto p = this->findRowByName(info->video->name);
+    if (p.first == nullptr || p.second == nullptr) return;
+    p.second->setValue(100);
 }
 
 void DownloadListDialog::closeEvent(QCloseEvent* event) {
