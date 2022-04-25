@@ -45,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent)
                 for (auto&& lesson: v) {
                     comboBox->addItem(lesson->teacher);
                 }
-                connect(comboBox, &QComboBox::currentTextChanged, this, &MainWindow::on_combobox_changed);
+                connect(comboBox, &QComboBox::currentTextChanged, this, &MainWindow::combobox_changed);
                 QListWidget* l = this->buildListWidgetForLesson(v[0]);
                 layout->addWidget(comboBox);
                 layout->addWidget(l);
@@ -123,7 +123,7 @@ QListWidget* MainWindow::buildListWidgetForLesson(Lesson* lesson, QString object
         objectName = lesson->name + "list";
     }
     l->setObjectName(objectName);
-    connect(l, &QListWidget::itemChanged, this, &MainWindow::on_list_item_state_changed);
+    connect(l, &QListWidget::itemChanged, this, &MainWindow::list_item_state_changed);
     return l;
 }
 
@@ -139,7 +139,7 @@ void MainWindow::on_actionUpdate_List_triggered()
     // TODO Ders Listesini Güncelle
 }
 
-void MainWindow::on_list_item_state_changed(QListWidgetItem* item)
+void MainWindow::list_item_state_changed(QListWidgetItem* item)
 {
     if (item->checkState() == Qt::CheckState::Checked) {
         bool found = false;
@@ -148,7 +148,7 @@ void MainWindow::on_list_item_state_changed(QListWidgetItem* item)
                 if (v->name == item->text()) {
                     this->videos_to_download.push_back(v);
                     found = true;
-                    qDebug() << "Added " << item->text() << " to download list";
+//                    qDebug() << "Added " << item->text() << " to download list";
                     break;
                 }
             }
@@ -170,7 +170,7 @@ void MainWindow::on_download_button_clicked()
     }
 }
 
-void MainWindow::on_combobox_changed(QString text)
+void MainWindow::combobox_changed(QString text)
 {
     int i = ui->tabWidget->currentIndex();
     QString t = ui->tabWidget->tabText(i);

@@ -19,7 +19,6 @@ int main(int argc, char *argv[])
         }
     }
     MainWindow w;
-    qInfo() << "Main window initialized showing it now";
     w.show();
     return a.exec();
 }

@@ -26,10 +26,10 @@ class MainWindow : public QMainWindow
         void on_actionExit_triggered();
 
         void on_actionUpdate_List_triggered();
-        void on_list_item_state_changed(QListWidgetItem* item);
+        void list_item_state_changed(QListWidgetItem* item);
 
         void on_download_button_clicked();
-        void on_combobox_changed(QString text);
+        void combobox_changed(QString text);
     signals:
         void start_download(QList<QPointer<Video>> videos);
 

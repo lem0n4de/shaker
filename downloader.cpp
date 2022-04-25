@@ -24,7 +24,10 @@ void Downloader::add_download(QList<QPointer<Video>> videos)
 //            qDebug() << video->id << "\n" << video->name << "\n" << "ALREADY DOWNLOADING";
         }
     }
-    download();
+    if (this->queue.isEmpty()){
+//        qDebug() << "Empty queue";
+        return;
+    } else download();
 }
 
 void Downloader::on_download_progress(QPointer<DownloadInfo> info)
@@ -36,7 +39,6 @@ void Downloader::on_download_finished(QPointer<DownloadInfo> info)
 {
     qDebug() << "Download finished: " << info->response->url();
     info->file->close();
-    info->completed_length = info->total_length;
     emit this->downloadFinished(info);
 }
 
@@ -47,11 +49,6 @@ void Downloader::on_download_ready_read(QPointer<DownloadInfo> info)
 
 void Downloader::download()
 {
-    if (this->queue.isEmpty()){
-//        qDebug() << "Empty queue";
-        return;
-    }
-
     for (const auto& item: this->queue) {
         QPointer<Video> video = this->queue.dequeue();
         QString filename = video->name + ".mp4";
@@ -72,8 +69,8 @@ void Downloader::download()
          * Maybe turn all DownloadInfo to pointers again.
          */
         connect(reply, &QNetworkReply::downloadProgress, this, [this, download_info](qint64 bytesReceived, qint64 bytesTotal) {
-            download_info->total_length = bytesTotal / 1024;
-            download_info->completed_length = bytesReceived / 1024;
+            download_info->total_length_in_bytes = bytesTotal / 1024;
+            download_info->completed_length_in_bytes = bytesReceived / 1024;
             download_info->download_speed = 0;
             this->on_download_progress(download_info);
         });

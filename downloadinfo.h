@@ -17,9 +17,11 @@ class DownloadInfo: public QObject
         QPointer<Video> video;
         QPointer<QFile> file;
         QPointer<QNetworkReply> response;
-        int64_t total_length; // In KB
-        int64_t completed_length; // In KB
         int download_speed; // In KB/s
+        int64_t total_length(); // In KB
+        int64_t completed_length(); // In KB
+        int64_t total_length_in_bytes;
+        int64_t completed_length_in_bytes;
         QString error;
         double percentage();
 };

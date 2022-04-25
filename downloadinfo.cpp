@@ -11,8 +11,8 @@ DownloadInfo::DownloadInfo(QPointer<Video> video,
     this->video = video;
     this->file = file;
     this->response = response;
-    this->total_length = total_length;
-    this->completed_length = completed_length;
+    this->total_length_in_bytes = total_length;
+    this->completed_length_in_bytes = completed_length;
     this->download_speed = download_speed;
 }
 
@@ -28,7 +28,17 @@ DownloadInfo::~DownloadInfo()
 
 }
 
+int64_t DownloadInfo::total_length()
+{
+    return this->total_length_in_bytes / 1024;
+}
+
+int64_t DownloadInfo::completed_length()
+{
+    return this->completed_length_in_bytes / 1024;
+}
+
 double DownloadInfo::percentage()
 {
-    return (double) ((double) this->completed_length / (double) this->total_length)*100;
+    return (double) ((double) this->completed_length() / (double) this->total_length())*100;
 }
