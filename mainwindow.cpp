@@ -21,13 +21,13 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     this->loadLessonsFromFile();
     this->download_list_dialog = new DownloadListDialog(this);
-    this->downloader.moveToThread(&this->worker_thread);
+//    this->downloader.moveToThread(&this->worker_thread);
     connect(&this->downloader, &Downloader::downloadProgress, this->download_list_dialog, &DownloadListDialog::download_progress);
     connect(&this->downloader, &Downloader::downloadFinished, this->download_list_dialog, &DownloadListDialog::download_finished);
     connect(this, &MainWindow::start_download, this->download_list_dialog, &DownloadListDialog::download_started);
-    connect(this, &MainWindow::start_download, &this->downloader, &Downloader::download);
-    connect(&this->worker_thread, &QThread::finished, &this->downloader, &QObject::deleteLater);
-    this->worker_thread.start();
+    connect(this, &MainWindow::start_download, &this->downloader, &Downloader::add_download);
+//    connect(&this->worker_thread, &QThread::finished, &this->downloader, &QObject::deleteLater);
+//    this->worker_thread.start();
 
     QStringList lesson_names;
     for (auto lesson: this->lessons) {
@@ -143,8 +143,8 @@ void MainWindow::on_list_item_state_changed(QListWidgetItem* item)
 {
     if (item->checkState() == Qt::CheckState::Checked) {
         bool found = false;
-        for (Lesson* l: this->lessons) {
-            for (Video* v: l->videos) {
+        for (const auto& l: this->lessons) {
+            for (const auto& v: l->videos) {
                 if (v->name == item->text()) {
                     this->videos_to_download.push_back(v);
                     found = true;
@@ -156,13 +156,15 @@ void MainWindow::on_list_item_state_changed(QListWidgetItem* item)
         }
     }
     else if (item->checkState() == Qt::CheckState::Unchecked) {
-        for (int i = 0; i<this->videos_to_download.size(); i++) {
-            if (this->videos_to_download[i]->name == item->text()) {
-                this->videos_to_download.erase(this->videos_to_download.begin()+i-1);
-                qDebug() << "Removed " << item->text() << " from download list";
-                break;
-            }
-        }
+        int rv = this->videos_to_download.removeIf([item] (QPointer<Video> v) { return v->name == item->text(); });
+        if (rv>0)
+            qDebug() << "Removed " << item->text() << " from download list";
+//        for (int i = 0; i<this->videos_to_download.size(); i++) {
+//            if (this->videos_to_download[i]->name == item->text()) {
+//                this->videos_to_download.erase(this->videos_to_download.begin()+i-1);
+//                break;
+//            }
+//        }
     }
 }
 
@@ -170,6 +172,7 @@ void MainWindow::on_list_item_state_changed(QListWidgetItem* item)
 void MainWindow::on_download_button_clicked()
 {
     if (!videos_to_download.empty()) {
+        qDebug() << "SIZE OF CHECKED ITEMS: " << videos_to_download.size();
         emit start_download(videos_to_download);
     }
 }
@@ -190,7 +193,7 @@ void MainWindow::on_combobox_changed(QString text)
         return;
     }
     listW->clear();
-    for (auto&& video: lesson->videos) {
+    for (const auto& video: lesson->videos) {
         QListWidgetItem* item = new QListWidgetItem;
         item->setText(video->name);
         item->setCheckState(Qt::CheckState::Unchecked);
@@ -200,6 +203,5 @@ void MainWindow::on_combobox_changed(QString text)
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-    this->downloader.on_program_exit();
 }
 

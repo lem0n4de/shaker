@@ -2,9 +2,14 @@
 #define DOWNLOADER_H
 
 #include <QObject>
-#include <aria2/aria2.h>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QQueue>
+#include <QFile>
+#include <QList>
+#include <QPointer>
 #include <video.h>
-#include <downloaddata.h>
+#include <downloadinfo.h>
 
 class Downloader : public QObject
 {
@@ -12,24 +17,29 @@ class Downloader : public QObject
     public:
         Downloader();
         ~Downloader();
-        static int aria2_downloadEventCallback(aria2::Session* session, aria2::DownloadEvent event,
-                                               const aria2::A2Gid gid, void* userData);
-        DownloadData* filter_download_data_by_gid(aria2::A2Gid gid);
-        aria2::Session* aria2_session = nullptr;
 
     public slots:
-        void download(std::vector<Video*> videos);
-        void on_program_exit();
+        void add_download(QList<QPointer<Video>> videos);
+
+    private slots:
+        void on_download_progress(qint64 bytes_received, qint64 bytes_total);
+        void on_download_progress(QPointer<DownloadInfo> info);
+        void on_download_finished(QPointer<DownloadInfo> info);
+        void on_download_ready_read(QPointer<DownloadInfo> info);
 
     signals:
-        void downloadFinished(DownloadData data);
-        void downloadProgress(DownloadData data);
-        void downloadError(DownloadData data);
-        void downloadStarted(DownloadData data);
+        void downloadFinished(QPointer<DownloadInfo> data);
+        void downloadProgress(QPointer<DownloadInfo> data);
+        void downloadError(QPointer<DownloadInfo> data);
+        void downloadStarted(QPointer<DownloadInfo> data);
 
     private:
-        std::vector<DownloadData*> v_download_data;
-        bool cancel;
+        QNetworkAccessManager manager;
+        QQueue<QPointer<Video>> queue;
+//        QList<QPointer<Video>> queue;
+//        std::vector<DownloadInfo> replies;
+        QList<QPointer<DownloadInfo>> downloading;
+        void download();
 };
 
 #endif // DOWNLOADER_H

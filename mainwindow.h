@@ -4,10 +4,11 @@
 #include <QMainWindow>
 #include <QListWidgetItem>
 #include <QThread>
+#include <QPointer>
+#include <QList>
 #include <lesson.h>
 #include <downloader.h>
 #include <downloadlistdialog.h>
-#include <aria2/aria2.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -30,13 +31,12 @@ class MainWindow : public QMainWindow
         void on_download_button_clicked();
         void on_combobox_changed(QString text);
     signals:
-        void start_download(std::vector<Video*> videos);
+        void start_download(QList<QPointer<Video>> videos);
 
     private:
         Ui::MainWindow *ui;
-        std::vector<Lesson*> lessons;
-        std::vector<Video*> videos_to_download;
-        aria2::Session* aria2_session;
+        QList<QPointer<Lesson>> lessons;
+        QList<QPointer<Video>> videos_to_download;
         QThread worker_thread;
         Downloader downloader;
         void closeEvent(QCloseEvent *event) override;

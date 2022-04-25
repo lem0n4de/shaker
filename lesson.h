@@ -3,6 +3,8 @@
 
 #include <QObject>
 #include <QDebug>
+#include <QList>
+#include <QPointer>
 #include <functional>
 #include <video.h>
 
@@ -12,10 +14,10 @@ class Lesson : public QObject
     public:
         QString teacher;
         QString name;
-        std::vector<Video*> videos;
+        QList<QPointer<Video>> videos;
         Lesson(const QString id, const QString name, const QString teacher);
-        static std::vector<Lesson*> filter_by_name(std::vector<Lesson*> lessons, QString name);
-        static std::vector<Lesson*> filter_by_teacher(std::vector<Lesson*> lessons, QString teacher);
+        static QList<QPointer<Lesson>> filter_by_name(QList<QPointer<Lesson>> lessons, QString name);
+        static QList<QPointer<Lesson>> filter_by_teacher(QList<QPointer<Lesson>> lessons, QString teacher);
     signals:
 
     private:

@@ -1,132 +1,105 @@
 #include "downloader.h"
-#include <aria2/aria2.h>
 #include <QDebug>
+#include <QFile>
 
 Downloader::Downloader()
 {
-    aria2::libraryInit();
 }
 
 Downloader::~Downloader()
 {
-    aria2::libraryDeinit();
-    for (auto d: this->v_download_data) {
-        if (d != nullptr) {
-            delete d;
-            d = nullptr;
-        }
-    }
 }
 
-int Downloader::aria2_downloadEventCallback(aria2::Session* session, aria2::DownloadEvent event,
-                                            const aria2::A2Gid gid, void* userData) {
-    Downloader* downloader = (Downloader *) userData;
-    DownloadData* data;
-    switch(event) {
-    case aria2::EVENT_ON_DOWNLOAD_START:
-        data = downloader->filter_download_data_by_gid(gid);
-        if (data != nullptr) {
-            data->download_speed = 0;
-            data->completed_length = 0;
-            data->total_length = 0;
-            data->percentage = 0;
-            emit downloader->downloadStarted(*data);
-        }
-        break;
-    case aria2::EVENT_ON_DOWNLOAD_PAUSE:
-        break;
-    case aria2::EVENT_ON_DOWNLOAD_STOP:
-        break;
-    case aria2::EVENT_ON_DOWNLOAD_ERROR:
-        data = downloader->filter_download_data_by_gid(gid);
-        if (data != nullptr) {
-            data->error_message = "Error";
-        }
-        break;
-    case aria2::EVENT_ON_BT_DOWNLOAD_COMPLETE:
-        break;
-    case aria2::EVENT_ON_DOWNLOAD_COMPLETE:
-        data = downloader->filter_download_data_by_gid(gid);
-        if (data != nullptr) {
-            data->completed_length = data->total_length;
-            data->percentage = 100.0;
-            emit downloader->downloadFinished(*data);
-        }
-        break;
-    }
-
-    return 0;
-}
-
-DownloadData* Downloader::filter_download_data_by_gid(aria2::A2Gid gid)
+void Downloader::add_download(QList<QPointer<Video>> videos)
 {
-    auto it = std::find_if(this->v_download_data.begin(),
-                           this->v_download_data.end(),
-                           [gid](DownloadData * data) { return gid == data->gid; });
-    if (it != this->v_download_data.end()) {
-        return *it;
-    } else {
-        return nullptr;
+    for (const auto& video: videos) {
+        auto it = std::find_if(this->downloading.begin(),
+                               this->downloading.end(),
+                               [video](QPointer<DownloadInfo> info) { return info->video == video; });
+        if (it == this->downloading.end()) {
+            // not found, its not downloading
+            qDebug() << "Adding " << video->name << " to queue";
+            this->queue.enqueue(video);
+        } else {
+            qDebug() << video->id << "\n" << video->name << "\n" << "ALREADY DOWNLOADING";
+        }
     }
+
+    qDebug() << "CALLING DOWNLOAD";
+    download();
 }
 
-void Downloader::download(std::vector<Video*> videos)
+void Downloader::on_download_progress(qint64 bytes_received, qint64 bytes_total)
 {
-    if (this->aria2_session == nullptr) {
-        aria2::SessionConfig config;
-        config.userData = this;
-        aria2::KeyVals options;
-        options.push_back(std::pair<std::string, std::string>("split", "16"));
-        options.push_back(std::pair<std::string, std::string>("max-connection-per-server", "16"));
-        config.downloadEventCallback = Downloader::aria2_downloadEventCallback;
-        this->aria2_session = aria2::sessionNew(options, config);
+    qDebug() << "Bytes received: " << bytes_received << "\n" << "Total bytes: " << bytes_total;
+}
+
+void Downloader::on_download_progress(QPointer<DownloadInfo> info)
+{
+//    qDebug() << "NAME: " << info.video->name
+//             << "\nPercentage: " << info.percentage
+//             << "\nTotal length: " << info.total_length
+//             << "\nCompleted Length: " << info.completed_length;
+}
+
+void Downloader::on_download_finished(QPointer<DownloadInfo> info)
+{
+    qDebug() << "Download finished: " << info->response->url();
+    info->file->close();
+}
+
+void Downloader::on_download_ready_read(QPointer<DownloadInfo> info)
+{
+    info->file->write(info->response->readAll());
+}
+
+void Downloader::download()
+{
+    if (this->queue.isEmpty()){
+        qDebug() << "EMPTY QUEUE";
+        return;
     }
 
-    int rv;
-    for (auto video: videos) {
-        std::vector<std::string> uris = {video->url.toStdString()};
-        std::string out = ""s + video->name.toStdString() + ".mp4";
+    qDebug() << "1";
+    for (const auto& item: this->queue) {
+        QPointer<Video> video = this->queue.dequeue();
+        QString filename = video->name.append(".mp4");
+        qDebug() << "Starting download of: " << filename;
+        QPointer<QFile> file = new QFile(filename);
 
-        aria2::KeyVals d_opts;
-        d_opts.push_back(std::pair<std::string, std::string>("out", out));
-        d_opts.push_back(std::pair<std::string, std::string>("header", "referer: https://tusworld.com.tr/VideoGrupDersleri"));
-        auto gid = aria2::hexToGid(video->id.toStdString());
-        rv = aria2::addUri(this->aria2_session, &gid, uris, d_opts);
-        if (rv <0) {
-            qCritical() << "Failed to add downloads.";
+        qDebug() << "2";
+        if (!file->open(QIODevice::WriteOnly)) {
+            qDebug() << "Error opening file: " << filename;
             return;
         }
-        auto d = new DownloadData(gid, video, out, -1, -1, -1, -1);
-        this->v_download_data.push_back(d);
-    }
 
-    for (;;) {
-        rv = aria2::run(this->aria2_session, aria2::RUN_ONCE);
-        if (rv != 1 || cancel) {
-            break;
-        }
-        std::vector<aria2::A2Gid> gids = aria2::getActiveDownload(this->aria2_session);
-        for (const auto& gid: gids) {
-            aria2::DownloadHandle* dh = aria2::getDownloadHandle(this->aria2_session, gid);
-            if (dh) {
-                auto it = std::find_if(this->v_download_data.begin(), this->v_download_data.end(), [gid](DownloadData* d) {
-                    return d->gid == gid;
-                });
-                if (it != this->v_download_data.end()) {
-                    // found
-                    auto data = *it;
-                    data->completed_length = dh->getCompletedLength();
-                    data->total_length = dh->getTotalLength();
-                    data->download_speed = dh->getDownloadSpeed();
-                    data->percentage = (double)data->completed_length / (double) data->total_length * 100.0;
-                    emit downloadProgress(*data);
-                }
-            }
-        }
+        QNetworkRequest request(video->url);
+        request.setRawHeader("referer", "https://tusworld.com.tr/VideoGrupDersleri");
+        qDebug() << "3";
+
+        QPointer<QNetworkReply> reply = this->manager.get(request);
+        QPointer<DownloadInfo> download_info = new DownloadInfo(video, file, reply);
+        qDebug() << "4";
+        /*
+         * Somehow calculate speed.
+         * Add timer to DownloadInfo, but it probably needs the usage of a single object,
+         * Maybe turn all DownloadInfo to pointers again.
+         */
+        connect(reply, &QNetworkReply::downloadProgress, this, [this, download_info](qint64 bytesReceived, qint64 bytesTotal) {
+            download_info->total_length = bytesTotal / 1024;
+            download_info->completed_length = bytesReceived / 1024;
+            download_info->download_speed = 0;
+            this->on_download_progress(download_info);
+        }); // &Downloader::on_download_progress);
+        connect(&this->manager, &QNetworkAccessManager::finished, this, [this, download_info] () {this->on_download_finished(download_info); });
+        connect(reply, &QNetworkReply::readyRead, this, [this, download_info] () { this->on_download_ready_read(download_info); });
+
+        qDebug() << "5";
+        this->downloading.push_back(download_info);
+        qDebug() << "6";
+        // speed = (bytes of data) / (time elapsed)
     }
+    qDebug() << "END OF DOWNLOAD";
 }
 
-void Downloader::on_program_exit()
-{
-    this->cancel = true;
-}
+

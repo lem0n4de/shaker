@@ -11,8 +11,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets LinguistTools WebEngineWidgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools WebEngineWidgets)
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets LinguistTools WebEngineWidgets Network)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools WebEngineWidgets Network)
 
 
 set(TS_FILES shaker_tr_TR.ts)
@@ -24,7 +24,7 @@ set(PROJECT_SOURCES
         mainwindow.ui
         lesson.h lesson.cpp
         video.h video.cpp
-        downloader.h downloader.cpp downloaddata.h downloaddata.cpp
+        downloader.h downloader.cpp downloadinfo.h downloadinfo.cpp
         downloadlistdialog.h downloadlistdialog.cpp downloadlistdialog.ui
         shaker.qrc
         ${TS_FILES}
@@ -57,7 +57,7 @@ else()
     qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 endif()
 
-target_link_libraries(shaker PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::WebEngineWidgets aria2)
+target_link_libraries(shaker PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::WebEngineWidgets Qt${QT_VERSION_MAJOR}::Network)
 
 set_target_properties(shaker PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com

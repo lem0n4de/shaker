@@ -35,9 +35,9 @@ std::pair<QTableWidgetItem*, QProgressBar*> DownloadListDialog::findRowByName(QS
  * @param videos
  * @returns the difference
  */
-std::vector<Video*> DownloadListDialog::append_videos(std::vector<Video*> videos)
+QList<QPointer<Video>> DownloadListDialog::append_videos(QList<QPointer<Video>> videos)
 {
-    std::vector<Video*> difference;
+    QList<QPointer<Video>> difference;
     for (auto&& v : videos) {
         auto it = std::find_if(this->videos.begin(), this->videos.end(), [v](Video* video) { return video->id == v->id; });
         if (it == this->videos.end()) {
@@ -49,20 +49,20 @@ std::vector<Video*> DownloadListDialog::append_videos(std::vector<Video*> videos
     return difference;
 }
 
-void DownloadListDialog::download_started(std::vector<Video*> videos)
+void DownloadListDialog::download_started(QList<QPointer<Video>> videos)
 {
     // TODO Sync videos with the new ones
     // TODO Add cancel option
-    std::vector<Video*> v;
+    QList<QPointer<Video>> v;
     if (!this->started) {
         this->started = true;
-        for (auto video: videos)
+        for (const auto& video: videos)
             this->videos.push_back(video);
         v = videos;
     } else {
         v = this->append_videos(videos);
     }
-    for (auto video: v) {
+    for (const auto& video: v) {
         auto lastRow = ui->tableWidget->rowCount();
         QTableWidgetItem* item = new QTableWidgetItem(video->name);
         QProgressBar* pBar = new QProgressBar(this);
@@ -75,18 +75,18 @@ void DownloadListDialog::download_started(std::vector<Video*> videos)
     this->show();
 }
 
-void DownloadListDialog::download_progress(DownloadData data)
+void DownloadListDialog::download_progress(QPointer<DownloadInfo> data)
 {
-    auto p = this->findRowByName(data.video->name);
-    if (p.first == nullptr || p.second == nullptr) return;
-    p.second->setValue(data.percentage);
+//    auto p = this->findRowByName(data.video->name);
+//    if (p.first == nullptr || p.second == nullptr) return;
+//    p.second->setValue(data.percentage);
 }
 
-void DownloadListDialog::download_finished(DownloadData data)
+void DownloadListDialog::download_finished(QPointer<DownloadInfo> data)
 {
-    auto p = this->findRowByName(data.video->name);
-    if (p.first == nullptr || p.second == nullptr) return;
-    p.second->setValue(100);
+//    auto p = this->findRowByName(data.video->name);
+//    if (p.first == nullptr || p.second == nullptr) return;
+//    p.second->setValue(100);
 }
 
 void DownloadListDialog::closeEvent(QCloseEvent* event) {
