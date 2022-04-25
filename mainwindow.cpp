@@ -93,7 +93,7 @@ void MainWindow::loadLessonsFromFile()
                     QString teacher = element["teacher"].toString();
                     QString name = element["name"].toString();
                     // TODO Add videos to lesson->videos
-                    Lesson* l = new Lesson(id, name, teacher);
+                    QPointer<Lesson> l = new Lesson(id, name, teacher);
 
                     QJsonArray videos_obj = element["videos"].toArray();
                     for (auto v_item : videos_obj) {
@@ -101,7 +101,8 @@ void MainWindow::loadLessonsFromFile()
                         QString v_id = v_elem["id"].toString();
                         QString v_name = v_elem["name"].toString();
                         QString v_url = v_elem["url"].toString();
-                        Video* v = new Video(v_id, v_name, l->teacher, v_url);
+                        QPointer<Video> v = new Video(v_id, v_name, l->teacher, v_url);
+                        v->lesson_name = l->name;
                         l->videos.push_back(v);
                     }
                     this->lessons.push_back(l);
@@ -114,10 +115,10 @@ void MainWindow::loadLessonsFromFile()
     inputFile.close();
 }
 
-QListWidget* MainWindow::buildListWidgetForLesson(Lesson* lesson, QString objectName)
+QListWidget* MainWindow::buildListWidgetForLesson(QPointer<Lesson> lesson, QString objectName)
 {
     QListWidget* l = new QListWidget;
-    for (Video* video : lesson->videos) {
+    for (const auto& video : lesson->videos) {
         QListWidgetItem* item = new QListWidgetItem;
         item->setText(video->name);
         item->setCheckState(Qt::CheckState::Unchecked);

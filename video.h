@@ -12,6 +12,7 @@ class Video : public QObject
         QString teacher;
         QString url;
         QString id;
+        QString lesson_name;
         bool operator==(Video const& rhs);
 
     signals:

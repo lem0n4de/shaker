@@ -62,7 +62,17 @@ void Downloader::download()
 {
     for (const auto& item: this->queue) {
         QPointer<Video> video = this->queue.dequeue();
-        QDir dir(this->download_folder);
+
+        QDir default_downloads_dir(this->download_folder);
+        QDir dir;
+
+        if (!default_downloads_dir.mkpath(video->lesson_name)) {
+            qCritical()
+                    << "Error creating directory: " << default_downloads_dir.absoluteFilePath(video->lesson_name)<< "\n"
+                    << "Using default download location";
+            dir = default_downloads_dir;
+        } else dir = default_downloads_dir.absoluteFilePath(video->lesson_name);
+
         QString filename = dir.absoluteFilePath(video->name + ".mp4");
         QPointer<QFile> file = new QFile(filename);
         if (!file->open(QIODevice::WriteOnly)) {

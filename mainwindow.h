@@ -44,7 +44,7 @@ class MainWindow : public QMainWindow
         Downloader downloader;
         void closeEvent(QCloseEvent *event) override;
         void loadLessonsFromFile();
-        QListWidget* buildListWidgetForLesson(Lesson* lesson, QString objectName = nullptr);
+        QListWidget* buildListWidgetForLesson(QPointer<Lesson> lesson, QString objectName = nullptr);
         DownloadListDialog* download_list_dialog;
 };
 #endif // MAINWINDOW_H

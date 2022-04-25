@@ -24,7 +24,7 @@ class Lesson : public QObject
         QString id;
 };
 
-QDebug inline operator<<(QDebug d, const Lesson* f) {
+QDebug inline operator<<(QDebug d, const QPointer<Lesson> f) {
     QDebug nsp = d.nospace();
     nsp << "Lesson(name=" << f->name << ", teacher=" << f->teacher << ", video_size=" << f->videos.size();
     nsp << "\n";
