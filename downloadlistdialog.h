@@ -20,6 +20,7 @@ class DownloadListDialog : public QDialog
     public:
         explicit DownloadListDialog(QWidget *parent = nullptr);
         ~DownloadListDialog();
+        void resizeEvent(QResizeEvent* event) override;
 
     protected:
         void closeEvent(QCloseEvent* event) override;

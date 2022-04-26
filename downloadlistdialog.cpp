@@ -19,6 +19,14 @@ DownloadListDialog::~DownloadListDialog()
     delete ui;
 }
 
+void DownloadListDialog::resizeEvent(QResizeEvent* event)
+{
+    for (int i = 0; i<ui->tableWidget->columnCount(); i++) {
+        ui->tableWidget->setColumnWidth(i, (ui->tableWidget->width()- ui->tableWidget->width()/20)/ui->tableWidget->columnCount());
+    }
+    event->accept();
+}
+
 std::pair<QTableWidgetItem*, QProgressBar*> DownloadListDialog::findRowByName(QString name)
 {
     auto it = std::find_if(widgets.begin(), widgets.end(), [name](std::pair<QTableWidgetItem*, QProgressBar*> pair) {
