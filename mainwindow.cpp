@@ -13,6 +13,7 @@
 #include <QStandardPaths>
 #include <iostream>
 #include <QComboBox>
+#include <scraper.h>
 
 using namespace std::string_literals;
 
@@ -64,6 +65,9 @@ MainWindow::MainWindow(QWidget *parent)
             }
         }
     }
+
+    auto s = new Scraper(this);
+    s->show();
 }
 
 MainWindow::~MainWindow()
