@@ -27,7 +27,8 @@ set(PROJECT_SOURCES
         downloader.h downloader.cpp downloadinfo.h downloadinfo.cpp
         downloadlistdialog.h downloadlistdialog.cpp downloadlistdialog.ui
         scraper.h scraper.cpp scraper.ui
-        scrapinglesson.h scrapinglesson.cpp
+        teacherlesson.h teacherlesson.cpp
+        uuid.h
         shaker.qrc
         ${TS_FILES}
 )

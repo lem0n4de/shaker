@@ -5,7 +5,9 @@
 #include <QUrl>
 #include <QWebEngineProfile>
 #include <QWebEnginePage>
-#include <scrapinglesson.h>
+#include <QPointer>
+#include <teacherlesson.h>
+#include <lesson.h>
 
 namespace Ui {
     class Scraper;
@@ -37,13 +39,22 @@ class Scraper : public QMainWindow
         Ui::Scraper *ui;
         QWebEngineProfile* profile;
         QWebEnginePage* page;
+        QList<std::pair<QString, QString>> lessons_to_scrape; // id, text without teachers
+        QList<TeacherLesson> teacher_lessons; // lessons with teachers
+        std::pair<QString, QString> searching_lesson_id_and_title; // id, text without teacher
+        bool lesson_names_scraped = false;
+
+        typedef void (Scraper::*video_scraper)(void);
+        video_scraper ongoing_video_scraping_function;
+
+        std::pair<TeacherLesson, QPointer<Lesson>> current_lesson;
+        QList<TeacherLesson> teacher_lessons_with_video_info;
+        QList<QPointer<Lesson>> finished_lessons;
+        bool ongoing_video_scraping = false;
+
         void scrape_anasayfa();
         void scrape_video_kategori();
         void scrape_video_grup_dersleri();
-        QList<std::pair<QString, QString>> lessons_to_scrape;
-        QList<ScrapingLesson> lessons_scraped;
-        std::pair<QString, QString> searching;
-        bool lesson_names_scraped = false;
         template<typename Functor, typename OnError>
         void wait_for_element_to_appear(QString selector, Functor callback, OnError on_error, unsigned int timeout = 30);
         template<typename Functor>

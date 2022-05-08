@@ -8,6 +8,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <video.h>
 
 Scraper::Scraper(QWidget *parent) :
     QMainWindow(parent),
@@ -23,17 +24,18 @@ Scraper::Scraper(QWidget *parent) :
 
     profile = new QWebEngineProfile(this);
     profile->setHttpUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 12_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Safari/605.1.15");
-    // for now
-    auto cookie = QNetworkCookie("ASP.NET_SessionId", "kpokrsk1sua1mnew3izhd2vb");
+//    // for now
+    auto cookie = QNetworkCookie("ASP.NET_SessionId", "qakznv3vm3pfnrxa0rigseag");
     cookie.setDomain("tusworld.com.tr");
     profile->cookieStore()->setCookie(cookie);
-    // END for now
+//    // END for now
     page = new QWebEnginePage(profile, this);
     connect(page, &QWebEnginePage::loadFinished, this, &Scraper::loading_finished);
     ui->webEngineView->setPage(page);
     ui->webEngineView->showMaximized();
-    // for now
+
 //    page->load(QUrl("https://www.tusworld.com.tr/UyeGirisi"));
+    //     for now
     page->load(QUrl("https://www.tusworld.com.tr/Anasayfa"));
     // END for now
 }
@@ -47,7 +49,9 @@ void Scraper::loading_finished()
 {
     auto url = this->page->url();
     qDebug() << "Url == " << url;
-    if (url.matches(QUrl("https://www.tusworld.com.tr/Anasayfa"), QUrl::None)) {
+    if (this->ongoing_video_scraping) {
+        (this->*this->ongoing_video_scraping_function)();
+    } else if (url.matches(QUrl("https://www.tusworld.com.tr/Anasayfa"), QUrl::None)) {
         this->scrape_anasayfa();
     } else if (url.matches(QUrl("https://www.tusworld.com.tr/VideoKategori"), QUrl::None)) {
         // okul öğrencilerine premium paket
@@ -103,15 +107,15 @@ void Scraper::_on_hc_atf_found()
                        "    let lessons = [];"
                        "    let hcAtf = document.getElementsByClassName('HcAtf')[0];"
                        "    lessons.push({"
-                       "        name: '" + this->searching.second + "',"
-                       "        html_id: '" + this->searching.first + "',"
+                       "        name: '" + this->searching_lesson_id_and_title.second + "',"
+                       "        html_id: '" + this->searching_lesson_id_and_title.first + "',"
                        "        teacher: hcAtf.textContent.trim(),"
                        "        teacher_html_id: hcAtf.id"
                        "    });"
                        "    for (let el of document.getElementsByClassName('HocaAlt')) {"
                        "        lessons.push({"
-                       "            name: '" + this->searching.second + "',"
-                       "            html_id: '" + this->searching.first + "',"
+                       "            name: '" + this->searching_lesson_id_and_title.second + "',"
+                       "            html_id: '" + this->searching_lesson_id_and_title.first + "',"
                        "            teacher: el.textContent.trim(),"
                        "            teacher_html_id: el.id,"
                        "        });"
@@ -128,8 +132,10 @@ void Scraper::_on_hc_atf_found()
                 auto teacher = obj["teacher"].toString();
                 auto html_id = obj["html_id"].toString();
                 auto teacher_html_id = obj["teacher_html_id"].toString();
-                this->lessons_scraped.push_back(ScrapingLesson(name, html_id, teacher, teacher_html_id));
+                this->teacher_lessons.push_back(TeacherLesson(name, html_id, teacher, teacher_html_id));
             }
+
+            qDebug() << "_on_hc_atf_found() - " << this->teacher_lessons;
             emit this->start_video_scrape_of_hc_atf_lesson();
         }
     });
@@ -137,63 +143,168 @@ void Scraper::_on_hc_atf_found()
 
 void Scraper::_on_hc_atf_not_found()
 {
-    this->lessons_scraped.push_back(ScrapingLesson(this->searching.second, this->searching.first));
+    this->teacher_lessons.push_back(TeacherLesson(this->searching_lesson_id_and_title.second, this->searching_lesson_id_and_title.first));
     emit this->start_video_scrape_of_non_hc_atf_lesson();
 }
 
 void Scraper::_on_start_video_scrape_of_hc_atf_lesson()
 {
-    qDebug() << "on_start_video_scrape_of_hc_atf_lesson() - " << this->searching.second;
-    emit this->start_scrape_of_next_lesson();
+    if (this->ongoing_video_scraping) {
+        if (this->current_lesson.first.video_infos.empty()) {
+            this->wait_for_element_to_appear(".DerslerListesi",
+                                             [this] (const QVariant& out) {
+                if (out.isValid()) {
+                    this->page->runJavaScript("(function() {"
+                                              "     let videos = [];"
+                                              "     let d_l = document.getElementsByClassName('DerslerListesi')[0].getElementsByTagName('a');"
+                                              "     for (let el of d_l) {"
+                                              "         videos.push({"
+                                              "             name: el.textContent.trim(),"
+                                              "             id: el.id"
+                                              "         });"
+                                              "     }"
+                                              "     return videos;"
+                                              "})();",
+                                              [this] (const QVariant& out) {
+                        if (out.isValid()) {
+                            auto arr = out.toJsonArray();
+                            for (auto&& item : arr) {
+                                auto obj = item.toObject();
+                                auto name = obj["name"].toString();
+                                auto id = obj["id"].toString();
+                                TeacherLesson::video_info i;
+                                i.id = id;
+                                i.name = name;
+                                this->current_lesson.first.video_infos.push_back(i);
+                            }
+
+                            this->page->runJavaScript("document.getElementById('" + this->current_lesson.first.video_infos[0].id + "').click();");
+                        }
+                    });
+                }
+            });
+            return;
+        }
+        auto js = QString("(function () {"
+                          "     let video_name = document.getElementsByClassName('VidAdi')[0].textContent.trim();"
+                          "     let video_src = document.getElementsByTagName('video')[0].src;"
+                          "     return { name: video_name, src: video_src };"
+                          "})();");
+        this->page->runJavaScript(js, [this] (const QVariant& out) {
+            if (out.isValid()) {
+                auto obj = out.toJsonObject();
+                auto name = obj["name"].toString();
+                auto src = obj["src"].toString();
+                QPointer<Video> video = new Video(name, this->current_lesson.first.teacher, src);
+                video->lesson_name = this->current_lesson.first.name;
+                qDebug() << video;
+                this->current_lesson.second->videos.push_back(video);
+
+                qDebug() << "on_start_video_scrape_of_hc_atf_lesson() - on_going_video_scraping: " << video->name;
+
+                this->current_lesson.first.video_infos.pop_front();
+                if (this->current_lesson.first.video_infos.size() > 0) {
+                    this->page->runJavaScript("document.getElementById('" + this->current_lesson.first.video_infos[0].id + "').click();");
+                    qDebug() << this->current_lesson.first.video_infos.size() + 1 << " videos left";
+                } else {
+                    this->ongoing_video_scraping = false;
+                    this->ongoing_video_scraping_function = nullptr;
+                    emit this->start_video_scrape_of_hc_atf_lesson();
+                }
+            }
+        });
+        return;
+    }
+    qDebug() << "on_start_video_scrape_of_hc_atf_lesson() - " << this->searching_lesson_id_and_title.second;
+
+    QList<TeacherLesson> _list;
+    for (auto&& l : this->teacher_lessons) {
+        if (this->current_lesson.second) {
+            if (l.name == this->current_lesson.first.name
+                && l.teacher != this->current_lesson.first.teacher) {
+
+                // Check if we already scraped this one and added it as a Lesson
+                auto it = std::find_if(this->teacher_lessons_with_video_info.begin(),
+                                       this->teacher_lessons_with_video_info.end(),
+                                       [this,l] (TeacherLesson lesson) {
+                    return lesson.name == l.name && lesson.teacher == l.teacher;
+                });
+                if (it != this->teacher_lessons_with_video_info.end()) continue;
+                qDebug() << "Added " << l << " to scrape list";
+                _list.push_back(l);
+            };
+        } else {
+            if (l.name == this->searching_lesson_id_and_title.second) _list.push_back(l);
+        }
+    }
+    if (_list.size() > 0) {
+        this->current_lesson.first = _list[0];
+        _list.pop_front();
+        auto lesson = new Lesson(this->current_lesson.first.name, this->current_lesson.first.teacher);
+        this->finished_lessons.push_back(lesson);
+        this->current_lesson.second = lesson;
+
+        this->ongoing_video_scraping = true;
+        this->ongoing_video_scraping_function = &Scraper::_on_start_video_scrape_of_hc_atf_lesson;
+
+        this->page->runJavaScript("document.getElementById('" + this->current_lesson.first.teacher_html_id + "').click();");
+    } else {
+        emit this->start_scrape_of_next_lesson();
+    }
 }
 
 void Scraper::_on_start_video_scrape_of_non_hc_atf_lesson()
 {
-    qDebug() << "on_start_video_scrape_of_non_hc_atf_lesson() - " << this->searching.second;
+    qDebug() << "on_start_video_scrape_of_non_hc_atf_lesson() - " << this->searching_lesson_id_and_title.second;
+    this->ongoing_video_scraping = true;
+
+
+
+
+
+    this->ongoing_video_scraping = false;
     emit this->start_scrape_of_next_lesson();
 }
 
 void Scraper::_on_start_scrape_of_next_lesson()
 {
     if (this->lessons_to_scrape.isEmpty()) return;
-    this->searching = this->lessons_to_scrape[0];
+    this->searching_lesson_id_and_title = this->lessons_to_scrape[0];
     this->lessons_to_scrape.pop_front();
 //    qDebug() << "Starting scraping of " << this->searching.second;
-    auto js2 = QString("document.getElementById('"+ this->searching.first + "').click()");
+    auto js2 = QString("document.getElementById('"+ this->searching_lesson_id_and_title.first + "').click()");
     this->page->runJavaScript(js2);
 }
 
 void Scraper::scrape_video_grup_dersleri()
 {
-    if (this->searching.second.isEmpty()) {
-        // start scraping
-        if (!this->lesson_names_scraped) {
-            // only scrape lesson names if we did not already
-            // otherwise multiple runJavascript's will shoot.
-            auto js1 = QStringLiteral("(function () {"
-                                      "     let lessons = [];"
-                                      "     let dk = document.getElementsByClassName('DersKategorileri')[0];"
-                                      "     for (let t of dk.getElementsByTagName('a')) {"
-                                      "         lessons.push([t.id, t.textContent.trim()])"
-                                      "     }"
-                                      "     return lessons;"
-                                      "})();");
-            this->page->runJavaScript(js1, [this] (const QVariant& out) {
-                if (out.isValid()) {
-                    auto arr = out.toJsonArray();
-                    for (auto&& item: arr) {
-                        auto id = item.toArray()[0].toString();
-                        auto text = item.toArray()[1].toString();
-                        this->lessons_to_scrape.push_back(std::pair(id, text));
-                    }
-//                    qDebug() << this->lessons_to_scrape;
-                    this->lesson_names_scraped = true;
-
-                    emit this->start_scrape_of_next_lesson();
+    // start scraping
+    if (!this->lesson_names_scraped) {
+        // only scrape lesson names if we did not already
+        // otherwise multiple runJavascript's will shoot.
+        auto js1 = QStringLiteral("(function () {"
+                                  "     let lessons = [];"
+                                  "     let dk = document.getElementsByClassName('DersKategorileri')[0];"
+                                  "     for (let t of dk.getElementsByTagName('a')) {"
+                                  "         lessons.push([t.id, t.textContent.trim()])"
+                                  "     }"
+                                  "     return lessons;"
+                                  "})();");
+        this->page->runJavaScript(js1, [this] (const QVariant& out) {
+            if (out.isValid()) {
+                auto arr = out.toJsonArray();
+                for (auto&& item: arr) {
+                    auto id = item.toArray()[0].toString();
+                    auto text = item.toArray()[1].toString();
+                    this->lessons_to_scrape.push_back(std::pair(id, text));
                 }
-            });
-        }
-    } else {
+//                    qDebug() << this->lessons_to_scrape;
+                this->lesson_names_scraped = true;
+
+                emit this->start_scrape_of_next_lesson();
+            }
+        });
+    } else if (!this->ongoing_video_scraping) {
         // ongoing search
 //        qDebug() << "ongoing search for " << this->searching.second;
         this->wait_for_element_to_appear(".HcAtf",[this] (const QVariant& out) {
@@ -203,6 +314,8 @@ void Scraper::scrape_video_grup_dersleri()
 //            qDebug() << ".HcAtf not found for " << this->searching.second;
             emit this->hc_atf_not_found();
         }, 10);
+    } else {
+        emit this->start_scrape_of_next_lesson();
     }
 }
 

@@ -16,6 +16,7 @@ class Lesson : public QObject
         QString name;
         QList<QPointer<Video>> videos;
         Lesson(const QString id, const QString name, const QString teacher);
+        Lesson(const QString name, const QString teacher);
         static QList<QPointer<Lesson>> filter_by_name(QList<QPointer<Lesson>> lessons, QString name);
         static QList<QPointer<Lesson>> filter_by_teacher(QList<QPointer<Lesson>> lessons, QString teacher);
     signals:
