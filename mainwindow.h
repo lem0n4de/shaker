@@ -10,6 +10,7 @@
 #include <lesson.h>
 #include <downloader.h>
 #include <downloadlistdialog.h>
+#include <scraper.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -38,6 +39,7 @@ class MainWindow : public QMainWindow
 
     private:
         Ui::MainWindow *ui;
+        QPointer<Scraper> scraper;
         QList<QPointer<Lesson>> lessons;
         QList<QPointer<Video>> videos_to_download;
         QThread worker_thread;

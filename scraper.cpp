@@ -8,6 +8,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <jsondatabase.h>
 #include <video.h>
 
 Scraper::Scraper(QWidget *parent) :
@@ -21,7 +22,10 @@ Scraper::Scraper(QWidget *parent) :
     connect(this, &Scraper::hc_atf_not_found, this, &Scraper::_on_hc_atf_not_found);
     connect(this, &Scraper::start_video_scrape_of_hc_atf_lesson, this, &Scraper::_on_start_video_scrape_of_hc_atf_lesson);
     connect(this, &Scraper::start_video_scrape_of_non_hc_atf_lesson, this, &Scraper::_on_start_video_scrape_of_non_hc_atf_lesson);
+}
 
+void Scraper::scrape()
+{
     profile = new QWebEngineProfile(this);
     profile->setHttpUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 12_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Safari/605.1.15");
 //    // for now
@@ -207,7 +211,13 @@ void Scraper::_on_start_video_scrape_of_non_hc_atf_lesson()
 
 void Scraper::_on_start_scrape_of_next_lesson()
 {
-    if (this->lessons_to_scrape.isEmpty()) return;
+    if (this->lessons_to_scrape.isEmpty()) {
+        if (!this->finished_lessons.isEmpty()) {
+            // SAVE to lessons.json
+            JsonDatabase::save_lessons(this->finished_lessons);
+            return;
+        } else return;
+    }
     this->searching_lesson_id_and_title = this->lessons_to_scrape[0];
     this->lessons_to_scrape.pop_front();
 //    qDebug() << "Starting scraping of " << this->searching.second;

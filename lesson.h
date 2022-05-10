@@ -12,6 +12,7 @@ class Lesson : public QObject
 {
         Q_OBJECT
     public:
+        QString id;
         QString teacher;
         QString name;
         QList<QPointer<Video>> videos;
@@ -22,7 +23,6 @@ class Lesson : public QObject
     signals:
 
     private:
-        QString id;
 };
 
 QDebug inline operator<<(QDebug d, const QPointer<Lesson> f) {

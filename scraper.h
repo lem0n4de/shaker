@@ -19,21 +19,25 @@ class Scraper : public QMainWindow
 
     public:
         explicit Scraper(QWidget *parent = nullptr);
+        void scrape();
         ~Scraper();
 
     public slots:
         void loading_finished();
-        void _on_hc_atf_found();
-        void _on_hc_atf_not_found();
-        void _on_start_video_scrape_of_hc_atf_lesson();
-        void _on_start_video_scrape_of_non_hc_atf_lesson();
-        void _on_start_scrape_of_next_lesson();
+
     signals:
         void hc_atf_found();
         void hc_atf_not_found();
         void start_video_scrape_of_hc_atf_lesson();
         void start_video_scrape_of_non_hc_atf_lesson();
         void start_scrape_of_next_lesson();
+
+    private slots:
+        void _on_hc_atf_found();
+        void _on_hc_atf_not_found();
+        void _on_start_video_scrape_of_hc_atf_lesson();
+        void _on_start_video_scrape_of_non_hc_atf_lesson();
+        void _on_start_scrape_of_next_lesson();
 
     private:
         Ui::Scraper *ui;

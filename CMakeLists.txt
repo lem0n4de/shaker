@@ -28,10 +28,10 @@ set(PROJECT_SOURCES
         downloadlistdialog.h downloadlistdialog.cpp downloadlistdialog.ui
         scraper.h scraper.cpp scraper.ui
         teacherlesson.h teacherlesson.cpp
+        jsondatabase.h jsondatabase.cpp
         uuid.h
         shaker.qrc
-        ${TS_FILES}
-)
+        ${TS_FILES})
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(shaker

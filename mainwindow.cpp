@@ -11,6 +11,7 @@
 #include <QWebEngineView>
 #include <QFileDialog>
 #include <QStandardPaths>
+#include <jsondatabase.h>
 #include <iostream>
 #include <QComboBox>
 #include <scraper.h>
@@ -20,19 +21,18 @@ using namespace std::string_literals;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , scraper(new Scraper(this))
 {
     ui->setupUi(this);
     this->loadLessonsFromFile();
     // set default location to downloads folder
     this->downloader.set_download_folder(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation));
     this->download_list_dialog = new DownloadListDialog(this);
-//    this->downloader.moveToThread(&this->worker_thread);
+
     connect(&this->downloader, &Downloader::downloadProgress, this->download_list_dialog, &DownloadListDialog::download_progress);
     connect(&this->downloader, &Downloader::downloadFinished, this->download_list_dialog, &DownloadListDialog::download_finished);
     connect(this, &MainWindow::start_download, this->download_list_dialog, &DownloadListDialog::download_started);
     connect(this, &MainWindow::start_download, &this->downloader, &Downloader::add_download);
-//    connect(&this->worker_thread, &QThread::finished, &this->downloader, &QObject::deleteLater);
-//    this->worker_thread.start();
 
     QStringList lesson_names;
     for (const auto& lesson: this->lessons) {
@@ -65,9 +65,7 @@ MainWindow::MainWindow(QWidget *parent)
             }
         }
     }
-
-    auto s = new Scraper(this);
-    s->show();
+    scraper->scrape();
 }
 
 MainWindow::~MainWindow()
@@ -79,44 +77,11 @@ MainWindow::~MainWindow()
 
 void MainWindow::loadLessonsFromFile()
 {
-    QByteArray json_byte;
-    QFile inputFile(":/lessons.json");
-
-    if (inputFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        json_byte = inputFile.readAll();
-        QJsonDocument doc(QJsonDocument::fromJson(json_byte));
-        if (doc.isEmpty()) {
-            QMessageBox::critical(this, tr("Empty json"), "Lessons.json is empty");
-        }
-        else {
-            if (doc.isArray()) {
-                QJsonArray arr = doc.array();
-                for (auto item : arr) {
-                    QJsonObject element = item.toObject();
-                    QString id = element["id"].toString();
-                    QString teacher = element["teacher"].toString();
-                    QString name = element["name"].toString();
-                    // TODO Add videos to lesson->videos
-                    QPointer<Lesson> l = new Lesson(id, name, teacher);
-
-                    QJsonArray videos_obj = element["videos"].toArray();
-                    for (auto v_item : videos_obj) {
-                        QJsonObject v_elem = v_item.toObject();
-                        QString v_id = v_elem["id"].toString();
-                        QString v_name = v_elem["name"].toString();
-                        QString v_url = v_elem["url"].toString();
-                        QPointer<Video> v = new Video(v_id, v_name, l->teacher, v_url);
-                        v->lesson_name = l->name;
-                        l->videos.push_back(v);
-                    }
-                    this->lessons.push_back(l);
-                }
-            }
-        }
-    } else {
-        QMessageBox::critical(this, tr("Error"), inputFile.errorString());
+    try {
+        this->lessons = JsonDatabase::retrieve_lessons();
+    } catch (std::invalid_argument& e) {
+        QMessageBox::critical(this, tr("Error"), tr(e.what()));
     }
-    inputFile.close();
 }
 
 QListWidget* MainWindow::buildListWidgetForLesson(QPointer<Lesson> lesson, QString objectName)
