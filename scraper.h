@@ -58,7 +58,9 @@ class Scraper : public QMainWindow
         void get_lesson_names();
         void get_video_names_for_current_lesson();
         void scrape_video_of_hc_atf_lesson_and_click_next_lesson();
-        QList<TeacherLesson> build_teacher_lesson_list_with_remaining_teachers();
+        void scrape_video_of_non_hc_atf_lesson_and_click_next_lesson();
+        void click_element_by_id(QString id);
+        QList<TeacherLesson> build_remaining_lesson_list();
         template<typename Functor, typename OnError>
         void wait_for_element_to_appear(QString selector, Functor callback, OnError on_error, unsigned int timeout = 30);
         template<typename Functor>

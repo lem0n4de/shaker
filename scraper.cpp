@@ -25,7 +25,7 @@ Scraper::Scraper(QWidget *parent) :
     profile = new QWebEngineProfile(this);
     profile->setHttpUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 12_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Safari/605.1.15");
 //    // for now
-    auto cookie = QNetworkCookie("ASP.NET_SessionId", "qakznv3vm3pfnrxa0rigseag");
+    auto cookie = QNetworkCookie("ASP.NET_SessionId", "2bgbgim0diy5s4y0xrxyod04");
     cookie.setDomain("tusworld.com.tr");
     profile->cookieStore()->setCookie(cookie);
 //    // END for now
@@ -134,8 +134,6 @@ void Scraper::_on_hc_atf_found()
                 auto teacher_html_id = obj["teacher_html_id"].toString();
                 this->teacher_lessons.push_back(TeacherLesson(name, html_id, teacher, teacher_html_id));
             }
-
-            qDebug() << "_on_hc_atf_found() - " << this->teacher_lessons;
             emit this->start_video_scrape_of_hc_atf_lesson();
         }
     });
@@ -161,7 +159,7 @@ void Scraper::_on_start_video_scrape_of_hc_atf_lesson()
         return;
     }
 
-    QList<TeacherLesson> _list = this->build_teacher_lesson_list_with_remaining_teachers();
+    QList<TeacherLesson> _list = this->build_remaining_lesson_list();
 
     if (_list.size() > 0) {
         this->current_lesson.first = _list[0];
@@ -173,7 +171,7 @@ void Scraper::_on_start_video_scrape_of_hc_atf_lesson()
         this->ongoing_video_scraping = true;
         this->ongoing_video_scraping_function = &Scraper::_on_start_video_scrape_of_hc_atf_lesson;
 
-        this->page->runJavaScript("document.getElementById('" + this->current_lesson.first.teacher_html_id + "').click();");
+        this->click_element_by_id(this->current_lesson.first.teacher_html_id);
     } else {
         emit this->start_scrape_of_next_lesson();
     }
@@ -181,15 +179,30 @@ void Scraper::_on_start_video_scrape_of_hc_atf_lesson()
 
 void Scraper::_on_start_video_scrape_of_non_hc_atf_lesson()
 {
-    qDebug() << "on_start_video_scrape_of_non_hc_atf_lesson() - " << this->searching_lesson_id_and_title.second;
-    this->ongoing_video_scraping = true;
+    if (this->ongoing_video_scraping) {
+        if (this->current_lesson.first.video_infos.empty()) {
+            this->get_video_names_for_current_lesson();
+            return;
+        }
+        this->scrape_video_of_non_hc_atf_lesson_and_click_next_lesson();
+        return;
+    }
+    QList<TeacherLesson> _list = this->build_remaining_lesson_list();
 
+    if (_list.size() > 0) {
+        this->current_lesson.first = _list[0];
+        _list.pop_front();
+        auto lesson = new Lesson(this->current_lesson.first.name, this->current_lesson.first.teacher);
+        this->finished_lessons.push_back(lesson);
+        this->current_lesson.second = lesson;
 
+        this->ongoing_video_scraping = true;
+        this->ongoing_video_scraping_function = &Scraper::_on_start_video_scrape_of_non_hc_atf_lesson;
 
-
-
-    this->ongoing_video_scraping = false;
-    emit this->start_scrape_of_next_lesson();
+        this->click_element_by_id(this->current_lesson.first.html_id);
+    } else {
+        emit this->start_scrape_of_next_lesson();
+    }
 }
 
 void Scraper::_on_start_scrape_of_next_lesson()
@@ -210,8 +223,10 @@ void Scraper::scrape_video_grup_dersleri()
     } else if (!this->ongoing_video_scraping) {
         // ongoing search
         this->wait_for_element_to_appear(".HcAtf",[this] (const QVariant& out) {
+            qDebug() << "hc_atf";
             emit this->hc_atf_found();
         }, [this] () {
+            qDebug() << "non_hc_atf";
             emit this->hc_atf_not_found();
         }, 10);
     } else {
@@ -281,6 +296,7 @@ void Scraper::get_video_names_for_current_lesson()
                         this->current_lesson.first.video_infos.push_back(i);
                     }
 
+                    this->click_element_by_id(this->current_lesson.first.video_infos[0].id);
                 }
             });
         }
@@ -306,7 +322,7 @@ void Scraper::scrape_video_of_hc_atf_lesson_and_click_next_lesson()
 
             this->current_lesson.first.video_infos.pop_front();
             if (this->current_lesson.first.video_infos.size() > 0) {
-                this->page->runJavaScript("document.getElementById('" + this->current_lesson.first.video_infos[0].id + "').click();");
+                this->click_element_by_id(this->current_lesson.first.video_infos[0].id);
                 qInfo() << this->current_lesson.first.video_infos.size() + 1 << " videos left";
             } else {
                 this->ongoing_video_scraping = false;
@@ -317,27 +333,55 @@ void Scraper::scrape_video_of_hc_atf_lesson_and_click_next_lesson()
     });
 }
 
-QList<TeacherLesson> Scraper::build_teacher_lesson_list_with_remaining_teachers()
+void Scraper::scrape_video_of_non_hc_atf_lesson_and_click_next_lesson()
+{
+    auto js = QString("(function () {"
+                      "     let video_name = document.getElementsByClassName('VidAdi')[0].textContent.trim();"
+                      "     let video_src = document.getElementsByTagName('video')[0].src;"
+                      "     return { name: video_name, src: video_src };"
+                      "})();");
+    this->page->runJavaScript(js, [this] (const QVariant& out) {
+        if (out.isValid()) {
+            auto obj = out.toJsonObject();
+            auto name = obj["name"].toString();
+            auto src = obj["src"].toString();
+            QPointer<Video> video = new Video(name, this->current_lesson.first.teacher, src);
+            video->lesson_name = this->current_lesson.first.name;
+            this->current_lesson.second->videos.push_back(video);
+            qDebug() << "Scraped: " << video;
+
+            this->current_lesson.first.video_infos.pop_front();
+            if (this->current_lesson.first.video_infos.size() > 0) {
+                this->click_element_by_id(this->current_lesson.first.video_infos[0].id);
+                qInfo() << this->current_lesson.first.video_infos.size() + 1 << " videos left";
+            } else {
+                this->ongoing_video_scraping = false;
+                this->ongoing_video_scraping_function = nullptr;
+                emit this->start_scrape_of_next_lesson();
+            }
+        }
+    });
+}
+
+void Scraper::click_element_by_id(QString id)
+{
+    this->page->runJavaScript("document.getElementById('" + id + "').click();");
+}
+
+QList<TeacherLesson> Scraper::build_remaining_lesson_list()
 {
     QList<TeacherLesson> _list;
-    for (auto&& l : this->teacher_lessons) {
-        if (this->current_lesson.second) {
-            if (l.name == this->current_lesson.first.name
-                && l.teacher != this->current_lesson.first.teacher) {
-
-                // Check if we already scraped this one and added it as a Lesson
-                auto it = std::find_if(this->teacher_lessons_with_video_info.begin(),
-                                       this->teacher_lessons_with_video_info.end(),
-                                       [this,l] (TeacherLesson lesson) {
-                    return lesson.name == l.name && lesson.teacher == l.teacher;
-                });
-                if (it != this->teacher_lessons_with_video_info.end()) continue;
-                _list.push_back(l);
-            };
-        } else {
-            if (l.name == this->searching_lesson_id_and_title.second) _list.push_back(l);
-        }
+    for (auto&& l: this->teacher_lessons) {
+        auto it = std::find_if(this->finished_lessons.begin(),
+                               this->finished_lessons.end(),
+                               [this,l ] (QPointer<Lesson> pLesson) {
+                  return pLesson->name == l.name && pLesson->teacher == l.teacher;
+        });
+        if (it != this->finished_lessons.end()) continue;
+        _list.push_back(l);
     }
+
+    qDebug() << _list;
     return _list;
 }
 
