@@ -26,8 +26,17 @@ Scraper::Scraper(QWidget *parent) :
     connect(this, &Scraper::start_video_scrape_of_non_hc_atf_lesson, this, &Scraper::_on_start_video_scrape_of_non_hc_atf_lesson);
 }
 
+/**
+ * @brief Scraper::scrape
+ * Starts scraping the lessons. Silently returns if scraping
+ * has already started.
+ */
 void Scraper::scrape()
 {
+    if (this->is_scraping()) {
+        return;
+    }
+    this->_working = true;
     profile = new QWebEngineProfile(this);
     profile->setHttpUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 12_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Safari/605.1.15");
 //    // for now
@@ -49,6 +58,11 @@ void Scraper::scrape()
 Scraper::~Scraper()
 {
     delete ui;
+}
+
+bool Scraper::is_scraping()
+{
+    return this->_working;
 }
 
 void Scraper::loading_finished()
@@ -217,6 +231,7 @@ void Scraper::_on_start_scrape_of_next_lesson()
         if (!this->finished_lessons.isEmpty()) {
             // SAVE to lessons.json
             JsonDatabase::save_lessons(this->finished_lessons);
+            this->_working = false;
             return;
         } else return;
     }
@@ -399,6 +414,7 @@ QList<TeacherLesson> Scraper::build_remaining_lesson_list()
 
 void Scraper::closeEvent(QCloseEvent* event)
 {
+    this->_working = false;
     this->page->deleteLater();
     event->accept();
     this->deleteLater();
