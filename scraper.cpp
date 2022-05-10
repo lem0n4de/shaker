@@ -8,6 +8,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QCloseEvent>
 #include <jsondatabase.h>
 #include <video.h>
 
@@ -16,6 +17,7 @@ Scraper::Scraper(QWidget *parent) :
     ui(new Ui::Scraper)
 {
     ui->setupUi(this);
+    this->setWindowTitle("QT WebEngine");
 
     connect(this, &Scraper::start_scrape_of_next_lesson, this, &Scraper::_on_start_scrape_of_next_lesson);
     connect(this, &Scraper::hc_atf_found, this, &Scraper::_on_hc_atf_found);
@@ -393,6 +395,14 @@ QList<TeacherLesson> Scraper::build_remaining_lesson_list()
 
     qDebug() << _list;
     return _list;
+}
+
+void Scraper::closeEvent(QCloseEvent* event)
+{
+    this->page->deleteLater();
+    event->accept();
+    this->deleteLater();
+    QMainWindow::closeEvent(event);
 }
 
 /**

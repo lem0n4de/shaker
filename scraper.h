@@ -69,6 +69,8 @@ class Scraper : public QMainWindow
         void wait_for_element_to_appear(QString selector, Functor callback, OnError on_error, unsigned int timeout = 30);
         template<typename Functor>
         void wait_for_element_to_appear(QString selector, Functor callback, unsigned int timeout = 30);
+
+        void closeEvent(QCloseEvent *event) override;
 };
 
 #endif // SCRAPER_H

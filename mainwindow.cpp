@@ -21,9 +21,9 @@ using namespace std::string_literals;
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , scraper(new Scraper(this))
 {
     ui->setupUi(this);
+    this->setWindowTitle("Shaker");
     this->loadLessonsFromFile();
     // set default location to downloads folder
     this->downloader.set_download_folder(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation));
@@ -65,7 +65,6 @@ MainWindow::MainWindow(QWidget *parent)
             }
         }
     }
-    scraper->scrape();
 }
 
 MainWindow::~MainWindow()
@@ -111,6 +110,11 @@ void MainWindow::on_actionExit_triggered()
 void MainWindow::on_actionUpdate_List_triggered()
 {
     // TODO Ders Listesini Güncelle
+    if (!this->scraper) {
+        this->scraper = new Scraper(this);
+    }
+    this->scraper->scrape();
+    this->scraper->show();
 }
 
 void MainWindow::list_item_state_changed(QListWidgetItem* item)
@@ -170,6 +174,7 @@ void MainWindow::combobox_changed(QString text)
 
 void MainWindow::closeEvent(QCloseEvent* event)
 {
+    QMainWindow::closeEvent(event);
 }
 
 
