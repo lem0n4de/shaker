@@ -14,6 +14,8 @@
 #include <jsondatabase.h>
 #include <iostream>
 #include <QComboBox>
+#include <QStatusBar>
+#include <QLabel>
 #include <scraper.h>
 
 using namespace std::string_literals;
@@ -112,6 +114,7 @@ void MainWindow::on_actionUpdate_List_triggered()
     // TODO Ders Listesini Güncelle
     if (!this->scraper) {
         this->scraper = new Scraper(this);
+        connect(this->scraper, &Scraper::new_video_scraped, this, &MainWindow::on_new_video_scraped);
     }
     this->scraper->scrape();
     this->scraper->show();
@@ -181,6 +184,11 @@ void MainWindow::closeEvent(QCloseEvent* event)
 void MainWindow::on_action_show_download_list_dialog_triggered()
 {
     this->download_list_dialog->show();
+}
+
+void MainWindow::on_new_video_scraped(QPointer<Video> video)
+{
+    this->ui->statusbar->showMessage(tr("Got url of [") + video->lesson_name + "(" + video->teacher + ") : " + video->name + "]");
 }
 
 

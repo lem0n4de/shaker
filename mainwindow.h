@@ -31,6 +31,7 @@ class MainWindow : public QMainWindow
         void on_download_button_clicked();
         void combobox_changed(QString text);
         void on_action_show_download_list_dialog_triggered();
+        void on_new_video_scraped(QPointer<Video> video);
 
         void on_action_change_download_location_triggered();
 
@@ -48,5 +49,6 @@ class MainWindow : public QMainWindow
         void loadLessonsFromFile();
         QListWidget* buildListWidgetForLesson(QPointer<Lesson> lesson, QString objectName = nullptr);
         DownloadListDialog* download_list_dialog;
+        QWidget* statusbar_textbox;
 };
 #endif // MAINWINDOW_H

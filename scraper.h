@@ -27,6 +27,7 @@ class Scraper : public QMainWindow
         void loading_finished();
 
     signals:
+        void new_video_scraped(QPointer<Video> video);
         void hc_atf_found();
         void hc_atf_not_found();
         void start_video_scrape_of_hc_atf_lesson();

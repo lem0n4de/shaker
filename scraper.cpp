@@ -40,7 +40,7 @@ void Scraper::scrape()
     profile = new QWebEngineProfile(this);
     profile->setHttpUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 12_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Safari/605.1.15");
 //    // for now
-    auto cookie = QNetworkCookie("ASP.NET_SessionId", "2bgbgim0diy5s4y0xrxyod04");
+    auto cookie = QNetworkCookie("ASP.NET_SessionId", "f42gxbwtea1nzcy3250pr32w");
     cookie.setDomain("tusworld.com.tr");
     profile->cookieStore()->setCookie(cookie);
 //    // END for now
@@ -347,6 +347,7 @@ void Scraper::scrape_video_of_hc_atf_lesson_and_click_next_lesson()
             this->current_lesson.second->videos.push_back(video);
             qDebug() << "Scraped: " << video;
 
+            emit this->new_video_scraped(video);
             this->current_lesson.first.video_infos.pop_front();
             if (this->current_lesson.first.video_infos.size() > 0) {
                 this->click_element_by_id(this->current_lesson.first.video_infos[0].id);
@@ -377,6 +378,7 @@ void Scraper::scrape_video_of_non_hc_atf_lesson_and_click_next_lesson()
             this->current_lesson.second->videos.push_back(video);
             qDebug() << "Scraped: " << video;
 
+            emit this->new_video_scraped(video);
             this->current_lesson.first.video_infos.pop_front();
             if (this->current_lesson.first.video_infos.size() > 0) {
                 this->click_element_by_id(this->current_lesson.first.video_infos[0].id);
