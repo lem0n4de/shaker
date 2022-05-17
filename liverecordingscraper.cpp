@@ -78,12 +78,11 @@ void LiveRecordingScraper::scrape_video_list_page()
     this->page->runJavaScript(js, [this] (const QVariant& out) {
         if (out.isValid()) {
             auto arr = out.toJsonArray();
-            qDebug() << "LESSON LIST:";
             for (const auto&& item: arr) {
                 auto tuple = item.toArray();
                 auto id = tuple[0].toString();
                 auto name = tuple[1].toString().replace("Ders İzle", "").simplified();
-                qDebug() << "\tNAME=" << name << "\tID=" << id;
+                this->lesson_list.push_back(std::pair(TeacherLesson(name, id), nullptr));
             }
         }
     });

@@ -8,6 +8,8 @@
 #include <QList>
 #include <QString>
 #include <QCloseEvent>
+#include <QList>
+#include <lesson.h>
 #include <teacherlesson.h>
 
 
@@ -33,6 +35,7 @@ class LiveRecordingScraper : public QMainWindow
         QWebEngineProfile* profile;
         QWebEnginePage* page;
 
+        QList<std::pair<TeacherLesson, QPointer<Lesson>>> lesson_list;
         inline static const QString VIDEO_LIST_PAGE_URL_PATH = QStringLiteral("CanliVideoKategori");
         inline static const QString VIDEO_LIST_PAGE_BTNS_CLASS_NAME = QStringLiteral("PnlIzle");
         void scrape_video_list_page();
