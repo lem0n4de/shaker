@@ -33,13 +33,22 @@ class LiveRecordingScraper : public QMainWindow
         QWebEngineProfile* profile;
         QWebEnginePage* page;
 
-        inline static const QString ANASAYFA_CANLI_DERSLER_BUTON_CLASS = QStringLiteral("VdRnkCn");
-        inline static const QString ANASAYFA_URL_PATH = QStringLiteral("Anasayfa");
+
+        inline static const QString ONLINE_KONU_ANLATIMLARI_URL_PATH = QStringLiteral("CanliVideoAnaKategoriAlti");
+        inline static const QString ONLINE_KONU_ANLATIMLARI_BTN_CLASS_NAME = QStringLiteral("VdDrKaSub");
+        inline static const QString ONLINE_KONU_ANLATIMLARI_SEARCH_STRING_1 = QStringLiteral("Konu Anlatımları");
+        inline static const QString ONLINE_KONU_ANLATIMLARI_SEARCH_STRING_2 = QStringLiteral("DUS");
+        void nav_online_konu_anlatimlari();
+
         inline static const QString CANLI_DERS_KATEGORI_URL_PATH = QStringLiteral("CanliDersKategori");
         inline static const QString CANLI_DERS_KATEGORI_BUTON_CLASS = QStringLiteral("VdCanliDersler");
         inline static const QString CANLI_DERS_KATEGORI_SEARCH_STRING = QStringLiteral("Canlı Ders Kayıtları");
         void nav_canli_ders_dategori();
+
+        inline static const QString ANASAYFA_CANLI_DERSLER_BUTON_CLASS = QStringLiteral("VdRnkCn");
+        inline static const QString ANASAYFA_URL_PATH = QStringLiteral("Anasayfa");
         void nav_anasayfa();
+
 
         bool working = false;
 

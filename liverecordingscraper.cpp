@@ -57,7 +57,24 @@ void LiveRecordingScraper::loading_finished()
         this->nav_anasayfa();
     } else if (url.path().contains(this->CANLI_DERS_KATEGORI_URL_PATH)) {
         this->nav_canli_ders_dategori();
+    } else if (url.path().contains(this->ONLINE_KONU_ANLATIMLARI_URL_PATH)) {
+        this->nav_online_konu_anlatimlari();
     }
+}
+
+void LiveRecordingScraper::nav_online_konu_anlatimlari()
+{
+    auto js = QString("(function () {"
+                      "     let elements = document.getElementsByClassName('" + this->ONLINE_KONU_ANLATIMLARI_BTN_CLASS_NAME + "');"
+                      "     for (let item of elements) {"
+                      "         if (item.textContent.trim().includes('" + this->ONLINE_KONU_ANLATIMLARI_SEARCH_STRING_1 + "') "
+                                    "&& !item.textContent.trim().includes('" + this->ONLINE_KONU_ANLATIMLARI_SEARCH_STRING_2 + "')) {"
+                      "             item.getElementsByTagName('a')[0].click();"
+                      "         }"
+                      "     }"
+                      "})();");
+    this->page->runJavaScript(js);
+    qDebug() << "ran nav_online_konu_anlatimlari();";
 }
 
 void LiveRecordingScraper::nav_canli_ders_dategori()
