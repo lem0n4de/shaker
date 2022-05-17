@@ -4,7 +4,9 @@
 #include <QTimer>
 #include <QNetworkCookie>
 #include <QWebEngineCookieStore>
+#include <QWebEngineSettings>
 #include <QJsonArray>
+#include <QJsonObject>
 
 LiveRecordingScraper::LiveRecordingScraper(QWidget *parent) :
     QMainWindow(parent),
@@ -12,6 +14,8 @@ LiveRecordingScraper::LiveRecordingScraper(QWidget *parent) :
 {
     ui->setupUi(this);
     this->setWindowTitle("Canlı Ders Scraper");
+
+    connect(this, &LiveRecordingScraper::start_scrape_of_lesson, this, &LiveRecordingScraper::_on_start_scrape_of_lesson);
 }
 
 LiveRecordingScraper::~LiveRecordingScraper()
@@ -32,7 +36,7 @@ void LiveRecordingScraper::scrape()
 
     this->working = true;
     this->profile = new QWebEngineProfile(this);
-    this->profile->setHttpUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 12_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Safari/605.1.15");
+    this->profile->setHttpUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 11_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1 Safari/605.1.15");
 
     auto cookie = QNetworkCookie("ASP.NET_SessionId", "f42gxbwtea1nzcy3250pr32w");
     cookie.setDomain("tusworld.com.tr");
@@ -41,12 +45,12 @@ void LiveRecordingScraper::scrape()
     this->page = new QWebEnginePage(profile, this);
     connect(page, &QWebEnginePage::loadFinished, this, &LiveRecordingScraper::loading_finished);
     ui->webEngineView->setPage(page);
-    ui->webEngineView->showMaximized();
 
 //    page->load(QUrl("https://www.tusworld.com.tr/UyeGirisi"));
     //     for now
     this->page->load(QUrl("https://www.tusworld.com.tr/Anasayfa"));
     // END for now
+    this->showMaximized();
 }
 
 void LiveRecordingScraper::loading_finished()
@@ -61,7 +65,48 @@ void LiveRecordingScraper::loading_finished()
         this->nav_online_konu_anlatimlari();
     } else if (url.path().contains(this->VIDEO_LIST_PAGE_URL_PATH)) {
         this->scrape_video_list_page();
+    } else if (url.path().contains(this->VIDEO_PAGE_URL_PATH)) {
+        this->scrape_video_page();
     }
+}
+
+void LiveRecordingScraper::_on_start_scrape_of_lesson(std::pair<TeacherLesson, QPointer<Lesson>> pair)
+{
+    auto js = QString("document.getElementById('" + pair.first.html_id + "').click();");
+    this->page->runJavaScript(js);
+    this->current_lesson = pair;
+}
+
+void LiveRecordingScraper::_on_scrape_done(std::pair<TeacherLesson, QPointer<Lesson> > pair)
+{
+
+}
+
+void LiveRecordingScraper::scrape_video_page()
+{
+    auto js = QString("(function() {"
+                      "     let videos = [];"
+                      "     let d_l = document.getElementsByClassName('" + this->VIDEO_PAGE_DERSLER_LISTESI_CLASS_NAME + "')[0].getElementsByTagName('a');"
+                      "     for (let el of d_l) {"
+                      "         videos.push({"
+                      "             name: el.textContent.trim(),"
+                      "             id: el.id"
+                      "         });"
+                      "     }"
+                      "     return videos;"
+                      "})();");
+    this->page->runJavaScript(js, [this] (const QVariant& out) {
+        if (out.isValid()) {
+            auto arr = out.toJsonArray();
+            for (const auto&& item: arr) {
+                auto obj = item.toObject();
+                auto name = obj["name"].toString();
+                auto id = obj["id"].toString();
+                TeacherLesson::video_info i { id, name };
+                this->current_lesson.first.video_infos.push_back(i);
+            }
+        }
+    });
 }
 
 void LiveRecordingScraper::scrape_video_list_page()
@@ -84,6 +129,8 @@ void LiveRecordingScraper::scrape_video_list_page()
                 auto name = tuple[1].toString().replace("Ders İzle", "").simplified();
                 this->lesson_list.push_back(std::pair(TeacherLesson(name, id), nullptr));
             }
+            auto first = this->lesson_list.first();
+            emit this->start_scrape_of_lesson(first);
         }
     });
 }

@@ -29,13 +29,24 @@ class LiveRecordingScraper : public QMainWindow
 
     private slots:
         void loading_finished();
+        void _on_start_scrape_of_lesson(std::pair<TeacherLesson, QPointer<Lesson>> pair);
+        void _on_scrape_done(std::pair<TeacherLesson, QPointer<Lesson>> pair);
+
+    signals:
+        void start_scrape_of_lesson(std::pair<TeacherLesson, QPointer<Lesson>> pair);
+        void scrape_done(std::pair<TeacherLesson, QPointer<Lesson>> pair);
 
     private:
         Ui::LiveRecordingScraper *ui;
         QWebEngineProfile* profile;
         QWebEnginePage* page;
-
         QList<std::pair<TeacherLesson, QPointer<Lesson>>> lesson_list;
+        std::pair<TeacherLesson, QPointer<Lesson>> current_lesson;
+
+        inline static const QString VIDEO_PAGE_DERSLER_LISTESI_CLASS_NAME = QStringLiteral("DerslerListesi");
+        inline static const QString VIDEO_PAGE_URL_PATH = QStringLiteral("CanliVideoDersleri");
+        void scrape_video_page();
+
         inline static const QString VIDEO_LIST_PAGE_URL_PATH = QStringLiteral("CanliVideoKategori");
         inline static const QString VIDEO_LIST_PAGE_BTNS_CLASS_NAME = QStringLiteral("PnlIzle");
         void scrape_video_list_page();

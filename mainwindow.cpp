@@ -116,14 +116,12 @@ void MainWindow::on_actionUpdate_List_triggered()
         this->live_recording_scraper = new LiveRecordingScraper(this);
     }
     this->live_recording_scraper->scrape();
-    this->live_recording_scraper->show();
     return;
     if (!this->scraper) {
         this->scraper = new Scraper(this);
         connect(this->scraper, &Scraper::new_video_scraped, this, &MainWindow::on_new_video_scraped);
     }
     this->scraper->scrape();
-    this->scraper->show();
 }
 
 void MainWindow::list_item_state_changed(QListWidgetItem* item)
