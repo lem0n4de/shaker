@@ -7,6 +7,7 @@
 #include <QPointer>
 #include <QList>
 #include <QString>
+#include <QCloseEvent>
 #include <teacherlesson.h>
 
 
@@ -32,6 +33,9 @@ class LiveRecordingScraper : public QMainWindow
         QWebEngineProfile* profile;
         QWebEnginePage* page;
 
+        inline static const QString CANLI_DERSLER_BUTON_CLASS = QStringLiteral("VdRnkCn");
+        void nav_anasayfa();
+
         bool working = false;
 
         template<typename Functor, typename OnError>
@@ -39,6 +43,9 @@ class LiveRecordingScraper : public QMainWindow
         template<typename Functor>
         void wait_for_element_to_appear(QString selector, Functor callback, unsigned int timeout = 30);
 
+
+    protected:
+        void closeEvent(QCloseEvent* event) override;
 };
 
 #endif // LIVERECORDINGSCRAPER_H

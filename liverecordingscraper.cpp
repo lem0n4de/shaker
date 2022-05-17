@@ -52,9 +52,29 @@ void LiveRecordingScraper::loading_finished()
 {
     auto url = this->page->url();
     qDebug() << "URL == " << url.toDisplayString();
-    if (url.matches(QUrl("https://tusworld.com.tr/Anasayfa"), QUrl::None)) {
-        // anasayfa
+    if (url.path().contains("Anasayfa")) {
+        this->nav_anasayfa();
     }
+}
+
+void LiveRecordingScraper::nav_anasayfa()
+{
+    auto js = QString("document.getElementsByClassName('" +  this->CANLI_DERSLER_BUTON_CLASS + "')[0].click();");
+    this->page->runJavaScript(js);
+}
+
+
+
+
+
+
+void LiveRecordingScraper::closeEvent(QCloseEvent* event)
+{
+    this->working = false;
+    this->page->deleteLater();
+    event->accept();
+    this->deleteLater();
+    QMainWindow::closeEvent(event);
 }
 
 
