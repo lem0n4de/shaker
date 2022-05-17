@@ -33,6 +33,9 @@ class LiveRecordingScraper : public QMainWindow
         QWebEngineProfile* profile;
         QWebEnginePage* page;
 
+        inline static const QString VIDEO_LIST_PAGE_URL_PATH = QStringLiteral("CanliVideoKategori");
+        inline static const QString VIDEO_LIST_PAGE_BTNS_CLASS_NAME = QStringLiteral("PnlIzle");
+        void scrape_video_list_page();
 
         inline static const QString ONLINE_KONU_ANLATIMLARI_URL_PATH = QStringLiteral("CanliVideoAnaKategoriAlti");
         inline static const QString ONLINE_KONU_ANLATIMLARI_BTN_CLASS_NAME = QStringLiteral("VdDrKaSub");

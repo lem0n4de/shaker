@@ -4,7 +4,7 @@
 #include <QTimer>
 #include <QNetworkCookie>
 #include <QWebEngineCookieStore>
-#include <QJsonValue>
+#include <QJsonArray>
 
 LiveRecordingScraper::LiveRecordingScraper(QWidget *parent) :
     QMainWindow(parent),
@@ -59,7 +59,34 @@ void LiveRecordingScraper::loading_finished()
         this->nav_canli_ders_dategori();
     } else if (url.path().contains(this->ONLINE_KONU_ANLATIMLARI_URL_PATH)) {
         this->nav_online_konu_anlatimlari();
+    } else if (url.path().contains(this->VIDEO_LIST_PAGE_URL_PATH)) {
+        this->scrape_video_list_page();
     }
+}
+
+void LiveRecordingScraper::scrape_video_list_page()
+{
+    auto js = QString("(function () {"
+                      "     let lessons = [];"
+                      "     for (let item of document.getElementsByClassName('"+ this->VIDEO_LIST_PAGE_BTNS_CLASS_NAME + "')) {"
+                      "         let c = item.textContent.trim();"
+                      "         let id = item.id;"
+                      "         lessons.push([id, c]);"
+                      "     }"
+                      "     return lessons;"
+                      "})();");
+    this->page->runJavaScript(js, [this] (const QVariant& out) {
+        if (out.isValid()) {
+            auto arr = out.toJsonArray();
+            qDebug() << "LESSON LIST:";
+            for (const auto&& item: arr) {
+                auto tuple = item.toArray();
+                auto id = tuple[0].toString();
+                auto name = tuple[1].toString().replace("Ders İzle", "").simplified();
+                qDebug() << "\tNAME=" << name << "\tID=" << id;
+            }
+        }
+    });
 }
 
 void LiveRecordingScraper::nav_online_konu_anlatimlari()
