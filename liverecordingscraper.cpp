@@ -4,6 +4,7 @@
 #include <QTimer>
 #include <QNetworkCookie>
 #include <QWebEngineCookieStore>
+#include <QJsonValue>
 
 LiveRecordingScraper::LiveRecordingScraper(QWidget *parent) :
     QMainWindow(parent),
@@ -51,15 +52,33 @@ void LiveRecordingScraper::scrape()
 void LiveRecordingScraper::loading_finished()
 {
     auto url = this->page->url();
-    qDebug() << "URL == " << url.toDisplayString();
-    if (url.path().contains("Anasayfa")) {
+    qDebug() << "URL ==" << url.toDisplayString();
+    if (url.path().contains(this->ANASAYFA_URL_PATH)) {
         this->nav_anasayfa();
+    } else if (url.path().contains(this->CANLI_DERS_KATEGORI_URL_PATH)) {
+        this->nav_canli_ders_dategori();
     }
+}
+
+void LiveRecordingScraper::nav_canli_ders_dategori()
+{
+    auto js = QString("(function () {"
+                      "     let els = document.getElementsByClassName('" + this->CANLI_DERS_KATEGORI_BUTON_CLASS + "');"
+                      "     for (let item of els) {"
+                      "         if (item.textContent.trim().includes('" + this->CANLI_DERS_KATEGORI_SEARCH_STRING + "')) {"
+                      "             item.getElementsByTagName('a')[0].click();"
+                      "             return;"
+                      "         }"
+                      "     }"
+                      "})();");
+    this->wait_for_element_to_appear("." + this->CANLI_DERS_KATEGORI_BUTON_CLASS, [this, js] (const QVariant& out) {
+        this->page->runJavaScript(js);
+    });
 }
 
 void LiveRecordingScraper::nav_anasayfa()
 {
-    auto js = QString("document.getElementsByClassName('" +  this->CANLI_DERSLER_BUTON_CLASS + "')[0].click();");
+    auto js = QString("document.getElementsByClassName('" +  this->ANASAYFA_CANLI_DERSLER_BUTON_CLASS + "')[0].click();");
     this->page->runJavaScript(js);
 }
 
