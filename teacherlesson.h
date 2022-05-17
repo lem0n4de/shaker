@@ -15,6 +15,7 @@ class TeacherLesson
         QString name;
         QString teacher;
         QString teacher_html_id;
+        bool done;
 
         struct video_info {
                 QString id;
