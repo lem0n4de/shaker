@@ -27,6 +27,7 @@ set(PROJECT_SOURCES
         downloader.h downloader.cpp downloadinfo.h downloadinfo.cpp
         downloadlistdialog.h downloadlistdialog.cpp downloadlistdialog.ui
         scraper.h scraper.cpp scraper.ui
+        liverecordingscraper.h liverecordingscraper.cpp liverecordingscraper.ui
         teacherlesson.h teacherlesson.cpp
         jsondatabase.h jsondatabase.cpp
         uuid.h
