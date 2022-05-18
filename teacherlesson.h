@@ -15,13 +15,21 @@ class TeacherLesson
         QString name;
         QString teacher;
         QString teacher_html_id;
-        bool done;
+        bool finished();
+        void start();
+        bool is_started();
+        bool is_ended();
+        void end();
 
         struct video_info {
                 QString id;
                 QString name;
         };
+        video_info pop_video_info();
         QList<video_info> video_infos;
+    private:
+        bool started = false;
+        bool ended = false;
 };
 
 QDebug inline operator<<(QDebug d, const TeacherLesson v) {

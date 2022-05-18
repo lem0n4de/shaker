@@ -10,6 +10,7 @@
 #include <QCloseEvent>
 #include <QList>
 #include <lesson.h>
+#include <video.h>
 #include <teacherlesson.h>
 
 
@@ -29,12 +30,26 @@ class LiveRecordingScraper : public QMainWindow
 
     private slots:
         void loading_finished();
-        void _on_start_scrape_of_lesson(std::pair<TeacherLesson, QPointer<Lesson>> pair);
-        void _on_scrape_done(std::pair<TeacherLesson, QPointer<Lesson>> pair);
+        void start_new_lesson();
+        void _on_get_next_video_info();
+        void _on_acquired_new_video(QString name, QString src);
+        void _on_finished_lesson(); // return to lesson list page
+        void _on_finished();
 
     signals:
-        void start_scrape_of_lesson(std::pair<TeacherLesson, QPointer<Lesson>> pair);
-        void scrape_done(std::pair<TeacherLesson, QPointer<Lesson>> pair);
+        /*
+         * scrape start
+         * lesson names acquired -> start new lesson -> get_next_video_info ->
+         * acquired_new_video -> get_next_video_info ->
+         * lesson done
+         * scrape done
+         */
+        void started();
+        void acquired_lesson_names(); // start new lesson
+        void get_next_video_info();
+        void acquired_new_video(QString name, QString src);
+        void finished_lesson();
+        void finished();
 
     private:
         Ui::LiveRecordingScraper *ui;
@@ -42,14 +57,18 @@ class LiveRecordingScraper : public QMainWindow
         QWebEnginePage* page;
         QList<std::pair<TeacherLesson, QPointer<Lesson>>> lesson_list;
         std::pair<TeacherLesson, QPointer<Lesson>> current_lesson;
+        bool lesson_names_scraped();
+
+        void scrape_video();
 
         inline static const QString VIDEO_PAGE_DERSLER_LISTESI_CLASS_NAME = QStringLiteral("DerslerListesi");
         inline static const QString VIDEO_PAGE_URL_PATH = QStringLiteral("CanliVideoDersleri");
-        void scrape_video_page();
+        inline static const QString VIDEO_PAGE_URL_PATH_2 = QStringLiteral("CanliDersBolum");
+        void scrape_video_names();
 
-        inline static const QString VIDEO_LIST_PAGE_URL_PATH = QStringLiteral("CanliVideoKategori");
-        inline static const QString VIDEO_LIST_PAGE_BTNS_CLASS_NAME = QStringLiteral("PnlIzle");
-        void scrape_video_list_page();
+        inline static const QString LESSON_LIST_PAGE_URL_PATH = QStringLiteral("CanliVideoKategori");
+        inline static const QString LESSON_LIST_PAGE_BTNS_CLASS_NAME = QStringLiteral("PnlIzle");
+        void scrape_lesson_list_page();
 
         inline static const QString ONLINE_KONU_ANLATIMLARI_URL_PATH = QStringLiteral("CanliVideoAnaKategoriAlti");
         inline static const QString ONLINE_KONU_ANLATIMLARI_BTN_CLASS_NAME = QStringLiteral("VdDrKaSub");
@@ -73,6 +92,8 @@ class LiveRecordingScraper : public QMainWindow
         void wait_for_element_to_appear(QString selector, Functor callback, OnError on_error, unsigned int timeout = 30);
         template<typename Functor>
         void wait_for_element_to_appear(QString selector, Functor callback, unsigned int timeout = 30);
+
+        void enable_javascript(bool enable);
 
 
     protected:
