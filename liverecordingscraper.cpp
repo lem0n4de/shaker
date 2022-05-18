@@ -84,7 +84,9 @@ void LiveRecordingScraper::loading_finished()
 
 void LiveRecordingScraper::_on_acquired_new_video(QString name, QString src)
 {
-    this->current_lesson.second->videos.push_back(new Video(name, "", src));
+    QPointer<Video> v = new Video(name, "", src);
+    emit this->new_video_scraped(v);
+    this->current_lesson.second->videos.push_back(v);
     qDebug() << this->current_lesson.first.video_infos.size() << " videos left";
     emit this->get_next_video_info();
 }

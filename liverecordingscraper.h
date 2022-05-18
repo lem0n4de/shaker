@@ -45,6 +45,7 @@ class LiveRecordingScraper : public QMainWindow
          * scrape done
          */
         void started();
+        void new_video_scraped(QPointer<Video> video);
         void acquired_lesson_names(); // start new lesson
         void get_next_video_info();
         void acquired_new_video(QString name, QString src);
