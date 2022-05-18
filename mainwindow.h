@@ -27,7 +27,6 @@ class MainWindow : public QMainWindow
 
     private slots:
         void on_actionExit_triggered();
-        void on_actionUpdate_List_triggered();
         void list_item_state_changed(QListWidgetItem* item);
         void on_download_button_clicked();
         void combobox_changed(QString text);
@@ -35,6 +34,9 @@ class MainWindow : public QMainWindow
         void on_new_video_scraped(QPointer<Video> video);
 
         void on_action_change_download_location_triggered();
+        void on_action_recorded_lesson_refresh_triggered();
+
+        void on_action_live_lesson_refresh_triggered();
 
     signals:
         void start_download(QList<QPointer<Video>> videos);

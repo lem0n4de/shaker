@@ -44,7 +44,14 @@
     <property name="title">
      <string>Dosya</string>
     </property>
-    <addaction name="actionUpdate_List"/>
+    <widget class="QMenu" name="menuDers_Listesini_G_ncelle">
+     <property name="title">
+      <string>Ders Listesini Güncelle</string>
+     </property>
+     <addaction name="action_recorded_lesson_refresh"/>
+     <addaction name="action_live_lesson_refresh"/>
+    </widget>
+    <addaction name="menuDers_Listesini_G_ncelle"/>
     <addaction name="action_change_download_location"/>
     <addaction name="action_show_download_list_dialog"/>
     <addaction name="separator"/>
@@ -53,11 +60,6 @@
    <addaction name="menuDosya"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionUpdate_List">
-   <property name="text">
-    <string>Ders Listesini Güncelle</string>
-   </property>
-  </action>
   <action name="actionExit">
    <property name="text">
     <string>Çıkış</string>
@@ -71,6 +73,16 @@
   <action name="action_change_download_location">
    <property name="text">
     <string>İndirme konumunu değiştir</string>
+   </property>
+  </action>
+  <action name="action_recorded_lesson_refresh">
+   <property name="text">
+    <string>Kayıtlı dersleri güncelle</string>
+   </property>
+  </action>
+  <action name="action_live_lesson_refresh">
+   <property name="text">
+    <string>Canlı dersleri güncelle</string>
    </property>
   </action>
  </widget>

@@ -55,7 +55,6 @@ void LiveRecordingScraper::scrape()
     //     for now
     this->page->load(QUrl("https://www.tusworld.com.tr/Anasayfa"));
     // END for now
-    this->showMaximized();
 }
 
 void LiveRecordingScraper::loading_finished()
@@ -105,6 +104,7 @@ void LiveRecordingScraper::_on_finished()
     auto l = JsonDatabase::retrieve_lessons();
     l.append(list);
     JsonDatabase::save_lessons(l);
+    this->working = false;
 }
 
 bool LiveRecordingScraper::lesson_names_scraped()

@@ -109,21 +109,6 @@ void MainWindow::on_actionExit_triggered()
     this->close();
 }
 
-
-void MainWindow::on_actionUpdate_List_triggered()
-{
-    if (!this->live_recording_scraper) {
-        this->live_recording_scraper = new LiveRecordingScraper(this);
-    }
-    this->live_recording_scraper->scrape();
-    return;
-    if (!this->scraper) {
-        this->scraper = new Scraper(this);
-        connect(this->scraper, &Scraper::new_video_scraped, this, &MainWindow::on_new_video_scraped);
-    }
-    this->scraper->scrape();
-}
-
 void MainWindow::list_item_state_changed(QListWidgetItem* item)
 {
     if (item->checkState() == Qt::CheckState::Checked) {
@@ -204,5 +189,33 @@ void MainWindow::on_action_change_download_location_triggered()
                                                     QFileDialog::ShowDirsOnly
                                                     | QFileDialog::DontResolveSymlinks);
     this->downloader.set_download_folder(folder);
+}
+
+
+void MainWindow::on_action_recorded_lesson_refresh_triggered()
+{
+    if (this->live_recording_scraper && this->live_recording_scraper->is_scraping()) {
+        QMessageBox::critical(this, tr("Hata"), "Canlı dersler güncelleniyor, lütfen daha sonra tekrar deneyin.");
+        return;
+    }
+    if (!this->scraper) {
+        this->scraper = new Scraper(this);
+        connect(this->scraper, &Scraper::new_video_scraped, this, &MainWindow::on_new_video_scraped);
+    }
+    this->scraper->scrape();
+}
+
+
+void MainWindow::on_action_live_lesson_refresh_triggered()
+{
+    if (this->scraper && this->scraper->is_scraping()) {
+        QMessageBox::critical(this, tr("Hata"), "Kayıtlı dersler güncelleniyor, lütfen daha sonra tekrar deneyin.");
+        return;
+    }
+    if (!this->live_recording_scraper) {
+        this->live_recording_scraper = new LiveRecordingScraper(this);
+        connect(this->live_recording_scraper, &LiveRecordingScraper::new_video_scraped, this, &MainWindow::on_new_video_scraped);
+    }
+    this->live_recording_scraper->scrape();
 }
 
