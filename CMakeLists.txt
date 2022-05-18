@@ -31,7 +31,6 @@ set(PROJECT_SOURCES
         teacherlesson.h teacherlesson.cpp
         jsondatabase.h jsondatabase.cpp
         uuid.h
-        shaker.qrc
         ${TS_FILES})
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
