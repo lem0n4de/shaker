@@ -22,7 +22,7 @@ DownloadListDialog::~DownloadListDialog()
 void DownloadListDialog::resizeEvent(QResizeEvent* event)
 {
     for (int i = 0; i<ui->tableWidget->columnCount(); i++) {
-        ui->tableWidget->setColumnWidth(i, (ui->tableWidget->width()- ui->tableWidget->width()/20)/ui->tableWidget->columnCount());
+        ui->tableWidget->setColumnWidth(i, ui->tableWidget->width()/ui->tableWidget->columnCount());
     }
     event->accept();
 }
