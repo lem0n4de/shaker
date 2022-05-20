@@ -14,6 +14,9 @@ Downloader::Downloader(QString download_folder)
 
 Downloader::~Downloader()
 {
+    for (const auto& di: this->downloading) {
+        if (di->file->isOpen()) di->file->close();
+    }
 }
 
 void Downloader::set_download_folder(QString folder)
@@ -49,7 +52,26 @@ void Downloader::on_download_progress(QPointer<DownloadInfo> info)
 void Downloader::on_download_finished(QPointer<DownloadInfo> info)
 {
     qDebug() << "Download finished: " << info->response->url();
-    info->file->close();
+    if (info->response->error() != QNetworkReply::NoError) {
+        auto req = info->response->request();
+        info->response->deleteLater();
+        QPointer<QNetworkReply> reply = this->manager.get(req);
+        info->response = reply;
+        /*
+         * Somehow calculate speed.
+         * Add timer to DownloadInfo, but it probably needs the usage of a single object,
+         * Maybe turn all DownloadInfo to pointers again.
+         */
+        connect(reply, &QNetworkReply::downloadProgress, this, [this, info](qint64 bytesReceived, qint64 bytesTotal) {
+            info->total_length_in_bytes = bytesTotal / 1024;
+            info->completed_length_in_bytes = bytesReceived / 1024;
+            info->download_speed = 0;
+            this->on_download_progress(info);
+        });
+        connect(reply, &QNetworkReply::finished, this, [this, info] () {this->on_download_finished(info); });
+        connect(reply, &QNetworkReply::readyRead, this, [this, info] () { this->on_download_ready_read(info); });
+    }
+//    info->file->close();
     emit this->downloadFinished(info);
 }
 
@@ -96,7 +118,7 @@ void Downloader::download()
             download_info->download_speed = 0;
             this->on_download_progress(download_info);
         });
-        connect(&this->manager, &QNetworkAccessManager::finished, this, [this, download_info] () {this->on_download_finished(download_info); });
+        connect(reply, &QNetworkReply::finished, this, [this, download_info] () {this->on_download_finished(download_info); });
         connect(reply, &QNetworkReply::readyRead, this, [this, download_info] () { this->on_download_ready_read(download_info); });
         this->downloading.push_back(download_info);
         // speed = (bytes of data) / (time elapsed)
