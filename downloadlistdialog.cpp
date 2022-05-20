@@ -9,6 +9,7 @@ DownloadListDialog::DownloadListDialog(QWidget *parent) :
     ui(new Ui::DownloadListDialog)
 {
     ui->setupUi(this);
+    this->setWindowTitle(tr("İndirilenler"));
     ui->tableWidget->setColumnCount(2);
     ui->tableWidget->autoFillBackground();
     ui->tableWidget->setShowGrid(false);
