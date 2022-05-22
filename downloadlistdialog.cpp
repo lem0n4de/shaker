@@ -3,6 +3,7 @@
 
 #include <QProgressBar>
 #include <QCloseEvent>
+#include <QPushButton>
 
 DownloadListDialog::DownloadListDialog(QWidget *parent) :
     QDialog(parent),
@@ -10,9 +11,11 @@ DownloadListDialog::DownloadListDialog(QWidget *parent) :
 {
     ui->setupUi(this);
     this->setWindowTitle(tr("İndirilenler"));
-    ui->tableWidget->setColumnCount(2);
+    ui->tableWidget->setColumnCount(3);
     ui->tableWidget->autoFillBackground();
     ui->tableWidget->setShowGrid(false);
+    ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tableWidget->horizontalHeader()->hide();
 }
 
 DownloadListDialog::~DownloadListDialog()
@@ -75,10 +78,20 @@ void DownloadListDialog::download_started(QList<QPointer<Video>> videos)
         auto lastRow = ui->tableWidget->rowCount();
         QTableWidgetItem* item = new QTableWidgetItem(video->name);
         QProgressBar* pBar = new QProgressBar(this);
+
+        QPushButton* cancel_button = new QPushButton(QIcon(":/assets/cross.svg"), "");
+        QWidget* parent_widget = new QWidget(this);
+        QHBoxLayout* layout = new QHBoxLayout(parent_widget);
+        layout->addWidget(cancel_button);
+        layout->setAlignment(Qt::AlignCenter);
+        layout->setContentsMargins(0,0,0,0);
+        parent_widget->setLayout(layout);
+
         pBar->setValue(0);
         ui->tableWidget->insertRow(lastRow);
         ui->tableWidget->setItem(lastRow, 0, item);
         ui->tableWidget->setCellWidget(lastRow, 1, pBar);
+        ui->tableWidget->setCellWidget(lastRow, 2, parent_widget);
         widgets.push_back(std::pair(item, pBar));
     }
     this->show();

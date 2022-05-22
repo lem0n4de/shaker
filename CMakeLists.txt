@@ -14,8 +14,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g3 -O0 -DSHAKER_DEBUG
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wall -g3 -DSHAKER_DEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -Wall -O2")
 
-find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets LinguistTools WebEngineWidgets Network)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools WebEngineWidgets Network)
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets LinguistTools WebEngineWidgets Network Svg)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools WebEngineWidgets Network Svg)
 
 
 set(TS_FILES shaker_tr_TR.ts)
@@ -34,7 +34,9 @@ set(PROJECT_SOURCES
         teacherlesson.h teacherlesson.cpp
         jsondatabase.h jsondatabase.cpp
         uuid.h
-        ${TS_FILES} loghandler.h)
+        loghandler.h
+        resource.qrc
+        ${TS_FILES})
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(shaker
@@ -63,7 +65,8 @@ else()
     qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 endif()
 
-target_link_libraries(shaker PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::WebEngineWidgets Qt${QT_VERSION_MAJOR}::Network)
+target_link_libraries(shaker PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::WebEngineWidgets Qt${QT_VERSION_MAJOR}::Network
+        Qt${QT_VERSION_MAJOR}::Svg)
 
 set_target_properties(shaker PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
