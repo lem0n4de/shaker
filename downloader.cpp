@@ -2,6 +2,8 @@
 #include <QDebug>
 #include <QFile>
 #include <QDir>
+#include <QSettings>
+#include <QStandardPaths>
 
 Downloader::Downloader()
 {
@@ -9,7 +11,7 @@ Downloader::Downloader()
 
 Downloader::Downloader(QString download_folder)
 {
-    this->download_folder = download_folder;
+    this->set_download_folder(download_folder);
 }
 
 Downloader::~Downloader()
@@ -21,7 +23,11 @@ Downloader::~Downloader()
 
 void Downloader::set_download_folder(QString folder)
 {
-    this->download_folder = folder;
+    QSettings settings;
+    settings.setValue(Downloader::get_download_folder_setting_key(), folder);
+    this->_download_folder = folder;
+
+    qInfo() << "Set download folder to " << folder;
 }
 
 void Downloader::add_download(QList<QPointer<Video>> videos)
@@ -85,7 +91,7 @@ void Downloader::download()
     for (const auto& item: this->queue) {
         QPointer<Video> video = this->queue.dequeue();
 
-        QDir default_downloads_dir(this->download_folder);
+        QDir default_downloads_dir(this->download_folder());
         QDir dir;
 
         if (!default_downloads_dir.mkpath(video->lesson_name)) {
@@ -123,6 +129,18 @@ void Downloader::download()
         this->downloading.push_back(download_info);
         // speed = (bytes of data) / (time elapsed)
     }
+}
+
+QString Downloader::download_folder()
+{
+    if (!this->_download_folder.isEmpty()) {
+        return this->_download_folder;
+    }
+    QSettings settings;
+    auto df = settings.value(Downloader::get_download_folder_setting_key(),
+                             QStandardPaths::writableLocation(QStandardPaths::DownloadLocation)).toString();
+    this->_download_folder = df;
+    return this->_download_folder;
 }
 
 

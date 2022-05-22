@@ -8,6 +8,8 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    QApplication::setApplicationName("shaker");
+    QApplication::setOrganizationName("shaker");
     qInstallMessageHandler(shaker_log_handler);
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();

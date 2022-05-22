@@ -35,13 +35,15 @@ class Downloader : public QObject
         void downloadStarted(QPointer<DownloadInfo> data);
 
     private:
-        QString download_folder;
+        static QString get_download_folder_setting_key() { return "downloader/download_folder"; }
+        QString _download_folder = "";
         QNetworkAccessManager manager;
         QQueue<QPointer<Video>> queue;
 //        QList<QPointer<Video>> queue;
 //        std::vector<DownloadInfo> replies;
         QList<QPointer<DownloadInfo>> downloading;
         void download();
+        QString download_folder();
 };
 
 #endif // DOWNLOADER_H

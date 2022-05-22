@@ -28,8 +28,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     this->setWindowTitle("Shaker");
     this->loadLessonsFromFile();
-    // set default location to downloads folder
-    this->downloader.set_download_folder(QStandardPaths::writableLocation(QStandardPaths::DownloadLocation));
     this->download_list_dialog = new DownloadListDialog(this);
 
     connect(&this->downloader, &Downloader::downloadProgress, this->download_list_dialog, &DownloadListDialog::download_progress);
