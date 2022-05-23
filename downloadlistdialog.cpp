@@ -1,9 +1,11 @@
 #include "downloadlistdialog.h"
 #include "ui_downloadlistdialog.h"
+#include "ui_mainwindow.h"
 
 #include <QProgressBar>
 #include <QCloseEvent>
 #include <QPushButton>
+#include <mainwindow.h>
 
 DownloadListDialog::DownloadListDialog(QWidget *parent) :
     QDialog(parent),
@@ -17,6 +19,7 @@ DownloadListDialog::DownloadListDialog(QWidget *parent) :
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableWidget->horizontalHeader()->hide();
     ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    connect(this, &DownloadListDialog::cancel_download, this, &DownloadListDialog::download_cancelled);
 }
 
 DownloadListDialog::~DownloadListDialog()
@@ -81,6 +84,7 @@ void DownloadListDialog::download_started(QList<QPointer<Video>> videos)
         QProgressBar* pBar = new QProgressBar(this);
 
         QPushButton* cancel_button = new QPushButton(QIcon(":/assets/cross.svg"), "");
+        connect(cancel_button, &QPushButton::clicked, this, [this, video] () { emit this->cancel_download(video); });
         QWidget* parent_widget = new QWidget(this);
         QHBoxLayout* layout = new QHBoxLayout(parent_widget);
         layout->addWidget(cancel_button);
@@ -115,4 +119,13 @@ void DownloadListDialog::download_finished(QPointer<DownloadInfo> info)
 void DownloadListDialog::closeEvent(QCloseEvent* event) {
     this->hide();
     event->accept();
+}
+
+void DownloadListDialog::download_cancelled(const QPointer<Video>& video)
+{
+    auto p = this->findRowByName(video->name);
+    if (p.first == nullptr || p.second == nullptr) return;
+    ui->tableWidget->removeRow(p.first->row());
+    this->widgets.removeOne(p);
+    this->videos.removeOne(video);
 }

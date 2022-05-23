@@ -34,6 +34,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&this->downloader, &Downloader::downloadFinished, this->download_list_dialog, &DownloadListDialog::download_finished);
     connect(this, &MainWindow::start_download, this->download_list_dialog, &DownloadListDialog::download_started);
     connect(this, &MainWindow::start_download, &this->downloader, &Downloader::add_download);
+    connect(this->download_list_dialog, &DownloadListDialog::cancel_download,
+                    &this->downloader, &Downloader::download_cancelled);
 
     QStringList lesson_names;
     for (const auto& lesson: this->lessons) {

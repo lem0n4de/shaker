@@ -40,6 +40,7 @@ class MainWindow : public QMainWindow
 
     signals:
         void start_download(QList<QPointer<Video>> videos);
+        void cancel_download(QPointer<Video> video);
 
     private:
         Ui::MainWindow *ui;

@@ -22,6 +22,7 @@ class Downloader : public QObject
 
     public slots:
         void add_download(QList<QPointer<Video>> videos);
+        void download_cancelled(const QPointer<Video>& video);
 
     private slots:
         void on_download_progress(QPointer<DownloadInfo> info);

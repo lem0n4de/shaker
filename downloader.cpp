@@ -58,7 +58,9 @@ void Downloader::on_download_progress(QPointer<DownloadInfo> info)
 void Downloader::on_download_finished(QPointer<DownloadInfo> info)
 {
     qDebug() << "Download finished: " << info->response->url();
-    if (info->response->error() != QNetworkReply::NoError) {
+    if (info->response->error() == QNetworkReply::OperationCanceledError) {
+        info->error = "abort";
+    } else if (info->response->error() != QNetworkReply::NoError) {
         auto req = info->response->request();
         info->response->deleteLater();
         QPointer<QNetworkReply> reply = this->manager.get(req);
@@ -141,6 +143,22 @@ QString Downloader::download_folder()
                              QStandardPaths::writableLocation(QStandardPaths::DownloadLocation)).toString();
     this->_download_folder = df;
     return this->_download_folder;
+}
+
+void Downloader::download_cancelled(const QPointer<Video>& video)
+{
+    auto it = std::find_if(this->downloading.begin(),
+                           this->downloading.end(),
+                           [video](const QPointer<DownloadInfo>& info) { return info->video == video; });
+    if (it == this->downloading.end()) {
+        qDebug() << "Download not found " << video->name;
+        return;
+    }
+    auto di = *it;
+    di->response->abort();
+    this->downloading.removeOne(di);
+    di->deleteLater();
+    qDebug() << "Download cancelled " << di->video->name;
 }
 
 
