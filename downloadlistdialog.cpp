@@ -16,6 +16,7 @@ DownloadListDialog::DownloadListDialog(QWidget *parent) :
     ui->tableWidget->setShowGrid(false);
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableWidget->horizontalHeader()->hide();
+    ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 }
 
 DownloadListDialog::~DownloadListDialog()
