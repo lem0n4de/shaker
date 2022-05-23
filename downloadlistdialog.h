@@ -30,7 +30,6 @@ class DownloadListDialog : public QDialog
         bool started;
         Ui::DownloadListDialog* ui;
         QList<QPointer<Video>> videos;
-        QList<std::pair<QTableWidgetItem*, QProgressBar*>> widgets;
         std::pair<QTableWidgetItem*, QProgressBar*> findRowByName(QString name);
         QList<QPointer<Video>> append_videos(QList<QPointer<Video>> videos);
 

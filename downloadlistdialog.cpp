@@ -37,13 +37,12 @@ void DownloadListDialog::resizeEvent(QResizeEvent* event)
 
 std::pair<QTableWidgetItem*, QProgressBar*> DownloadListDialog::findRowByName(QString name)
 {
-    auto it = std::find_if(widgets.begin(), widgets.end(), [name](std::pair<QTableWidgetItem*, QProgressBar*> pair) {
-        return pair.first->text() == name;
-    });
-    if (it != widgets.end()) {
-        return *it;
-    }
-    return std::pair(nullptr, nullptr);
+    auto item = ui->tableWidget->findItems(name, Qt::MatchFlag::MatchExactly);
+    if (item.size() == 1) {
+        auto p = ui->tableWidget->cellWidget(item[0]->row(), item[0]->column()+1);
+        QPointer<QProgressBar> pBar = qobject_cast<QProgressBar*>(p);
+        return std::pair(item[0], pBar);
+    } else return std::pair(nullptr, nullptr);
 }
 
 /**
@@ -97,7 +96,6 @@ void DownloadListDialog::download_started(QList<QPointer<Video>> videos)
         ui->tableWidget->setItem(lastRow, 0, item);
         ui->tableWidget->setCellWidget(lastRow, 1, pBar);
         ui->tableWidget->setCellWidget(lastRow, 2, parent_widget);
-        widgets.push_back(std::pair(item, pBar));
     }
     this->show();
 }
@@ -126,6 +124,5 @@ void DownloadListDialog::download_cancelled(const QPointer<Video>& video)
     auto p = this->findRowByName(video->name);
     if (p.first == nullptr || p.second == nullptr) return;
     ui->tableWidget->removeRow(p.first->row());
-    this->widgets.removeOne(p);
     this->videos.removeOne(video);
 }
