@@ -59,6 +59,7 @@ void Downloader::_on_download_finished(const QPointer<DownloadInfo> &info)
     if (info->response->error() == QNetworkReply::OperationCanceledError)
     {
         info->error = "abort";
+        info->file->remove();
     } else if (info->response->error() != QNetworkReply::NoError)
     {
         auto req = info->response->request();
