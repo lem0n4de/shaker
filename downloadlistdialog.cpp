@@ -18,22 +18,14 @@ DownloadListDialog::DownloadListDialog(QWidget* parent) :
     ui->tableWidget->setShowGrid(false);
     ui->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->tableWidget->horizontalHeader()->hide();
-    ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    ui->tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     connect(this, &DownloadListDialog::cancel_download, this, &DownloadListDialog::download_cancelled);
+    connect(this, &DownloadListDialog::retry_download, this, &DownloadListDialog::_on_retry_download);
 }
 
 DownloadListDialog::~DownloadListDialog()
 {
     delete ui;
-}
-
-void DownloadListDialog::resizeEvent(QResizeEvent* event)
-{
-    for (int i = 0; i < ui->tableWidget->columnCount(); i++)
-    {
-        ui->tableWidget->setColumnWidth(i, ui->tableWidget->width() / ui->tableWidget->columnCount());
-    }
-    event->accept();
 }
 
 std::pair<QTableWidgetItem*, QProgressBar*> DownloadListDialog::findRowByName(const QString &name)
@@ -130,6 +122,36 @@ void DownloadListDialog::download_cancelled(const QPointer<Video> &video)
 {
     auto p = this->findRowByName(video->name);
     if (p.first == nullptr || p.second == nullptr) return;
-    ui->tableWidget->removeRow(p.first->row());
+//    ui->tableWidget->removeRow(p.first->row());
     this->videos.removeOne(video);
+
+    auto retry_button = new QPushButton(QIcon(":/assets/refresh.svg"), "");
+    connect(retry_button, &QPushButton::clicked, this, [this, video]() { emit this->retry_download(video); });
+    auto parent_widget = new QWidget(this);
+    auto layout = new QHBoxLayout(parent_widget);
+    layout->addWidget(retry_button);
+    layout->setAlignment(Qt::AlignCenter);
+    layout->setContentsMargins(0, 0, 0, 0);
+    parent_widget->setLayout(layout);
+    ui->tableWidget->cellWidget(p.first->row(), 2)->deleteLater();
+    ui->tableWidget->setCellWidget(p.first->row(), 2, parent_widget);
+}
+
+void DownloadListDialog::_on_retry_download(const QPointer<Video> &video)
+{
+    auto p = this->findRowByName(video->name);
+    if (p.first == nullptr || p.second == nullptr) return;
+//    ui->tableWidget->removeRow(p.first->row());
+    this->videos.push_back(video);
+
+    auto cancel_button = new QPushButton(QIcon(":/assets/cross.svg"), "");
+    connect(cancel_button, &QPushButton::clicked, this, [this, video]() { emit this->cancel_download(video); });
+    auto parent_widget = new QWidget(this);
+    auto layout = new QHBoxLayout(parent_widget);
+    layout->addWidget(cancel_button);
+    layout->setAlignment(Qt::AlignCenter);
+    layout->setContentsMargins(0, 0, 0, 0);
+    parent_widget->setLayout(layout);
+    ui->tableWidget->cellWidget(p.first->row(), 2)->deleteLater();
+    ui->tableWidget->setCellWidget(p.first->row(), 2, parent_widget);
 }

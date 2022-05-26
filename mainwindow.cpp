@@ -34,6 +34,10 @@ MainWindow::MainWindow(QWidget* parent)
     connect(this, &MainWindow::start_download, &this->downloader, &Downloader::add_download);
     connect(this->download_list_dialog, &DownloadListDialog::cancel_download,
             &this->downloader, &Downloader::download_cancelled);
+    connect(this->download_list_dialog, &DownloadListDialog::retry_download, this,
+            [this](const QPointer<Video> &video) {
+                this->downloader.add_download(QList{video});
+            });
 
     QStringList lesson_names;
     for (const auto &lesson: this->lessons)

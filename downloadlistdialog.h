@@ -20,9 +20,9 @@ class DownloadListDialog : public QDialog
     public:
         explicit DownloadListDialog(QWidget *parent = nullptr);
         ~DownloadListDialog() override;
-        void resizeEvent(QResizeEvent* event) override;
     signals:
         void cancel_download(const QPointer<Video> video);
+        void retry_download(const QPointer<Video>& video);
 
     protected:
         void closeEvent(QCloseEvent* event) override;
@@ -38,6 +38,7 @@ class DownloadListDialog : public QDialog
         void download_progress(const QPointer<DownloadInfo>& data);
         void download_finished(const QPointer<DownloadInfo>& data);
         void download_cancelled(const QPointer<Video>& video);
+        void _on_retry_download(const QPointer<Video>& video);
 };
 
 #endif // DOWNLOADLISTDIALOG_H
