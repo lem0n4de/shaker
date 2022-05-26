@@ -5,19 +5,23 @@
 #include <QJsonArray>
 #include <QJsonObject>
 
-void JsonDatabase::save_lessons(QList<QPointer<Lesson>> lessons)
+void JsonDatabase::save_lessons(const QList<QPointer<Lesson>> &lessons)
 {
-    if (!lessons.isEmpty()) {
-        QFile output_file(JsonDatabase::database_name);
-        if (output_file.open(QIODevice::ReadWrite | QIODevice::Truncate)) {
+    if (!lessons.isEmpty())
+    {
+        QFile output_file(JsonDatabase::database_name());
+        if (output_file.open(QIODevice::ReadWrite | QIODevice::Truncate))
+        {
             QJsonArray arr;
-            for (const auto& lesson: lessons) {
+            for (const auto &lesson: lessons)
+            {
                 QJsonObject obj;
                 obj["id"] = lesson->id;
                 obj["teacher"] = lesson->teacher;
                 obj["name"] = lesson->name;
                 QJsonArray v_arr;
-                for (const auto& video: lesson->videos) {
+                for (const auto &video: lesson->videos)
+                {
                     QJsonObject v_obj;
                     v_obj["id"] = video->id;
                     v_obj["name"] = video->name;
@@ -31,15 +35,18 @@ void JsonDatabase::save_lessons(QList<QPointer<Lesson>> lessons)
             doc.setArray(arr);
             auto rv = output_file.write(doc.toJson());
             output_file.close();
-            if (rv == -1) {
+            if (rv == -1)
+            {
                 qCritical() << "error while saving";
                 return;
             }
             qDebug() << "saved file";
-        } else {
+        } else
+        {
             qDebug() << "couldn't open file";
         }
-    } else {
+    } else
+    {
         qDebug() << "empty lessons";
     }
 }
@@ -47,15 +54,18 @@ void JsonDatabase::save_lessons(QList<QPointer<Lesson>> lessons)
 QList<QPointer<Lesson> > JsonDatabase::retrieve_lessons()
 {
     QByteArray json_byte;
-    QFile inputFile(JsonDatabase::database_name);
+    QFile inputFile(JsonDatabase::database_name());
     QList<QPointer<Lesson>> lessons;
 
-    if (inputFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    if (inputFile.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
         json_byte = inputFile.readAll();
         QJsonDocument doc(QJsonDocument::fromJson(json_byte));
-        if (!doc.isEmpty() && doc.isArray()) {
+        if (!doc.isEmpty() && doc.isArray())
+        {
             QJsonArray arr = doc.array();
-            for (auto item : arr) {
+            for (auto item: arr)
+            {
                 QJsonObject element = item.toObject();
                 QString id = element["id"].toString();
                 QString teacher = element["teacher"].toString();
@@ -64,7 +74,8 @@ QList<QPointer<Lesson> > JsonDatabase::retrieve_lessons()
                 QPointer<Lesson> l = new Lesson(id, name, teacher);
 
                 QJsonArray videos_obj = element["videos"].toArray();
-                for (auto v_item : videos_obj) {
+                for (auto v_item: videos_obj)
+                {
                     QJsonObject v_elem = v_item.toObject();
                     QString v_id = v_elem["id"].toString();
                     QString v_name = v_elem["name"].toString();
@@ -76,7 +87,8 @@ QList<QPointer<Lesson> > JsonDatabase::retrieve_lessons()
                 lessons.push_back(l);
             }
         }
-    } else {
+    } else
+    {
         throw std::invalid_argument("lessons.json not found");
     }
     inputFile.close();

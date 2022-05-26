@@ -9,8 +9,8 @@
 class JsonDatabase
 {
     public:
-        inline static const QString database_name = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/lessons.json";
-        static void save_lessons(QList<QPointer<Lesson>> lessons);
+        static QString database_name() { return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/lessons.json"; };
+        static void save_lessons(const QList<QPointer<Lesson>>& lessons);
         static QList<QPointer<Lesson>> retrieve_lessons();
 
     signals:

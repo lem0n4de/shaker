@@ -9,16 +9,16 @@ class TeacherLesson
 {
     public:
         TeacherLesson();
-        TeacherLesson(const QString name, const QString html_id);
-        TeacherLesson(const QString name, const QString html_id, const QString teacher, const QString teacher_html_id);
+        TeacherLesson(QString name, QString html_id);
+        TeacherLesson(QString name, QString html_id, QString teacher, QString teacher_html_id);
         QString html_id;
         QString name;
         QString teacher;
         QString teacher_html_id;
-        bool finished();
+
         void start();
-        bool is_started();
-        bool is_ended();
+        [[nodiscard]] bool is_started() const;
+        [[nodiscard]] bool is_ended() const;
         void end();
 
         struct video_info {

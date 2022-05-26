@@ -16,16 +16,16 @@ class Lesson : public QObject
         QString teacher;
         QString name;
         QList<QPointer<Video>> videos;
-        Lesson(const QString id, const QString name, const QString teacher);
-        Lesson(const QString name, const QString teacher);
-        static QList<QPointer<Lesson>> filter_by_name(QList<QPointer<Lesson>> lessons, QString name);
-        static QList<QPointer<Lesson>> filter_by_teacher(QList<QPointer<Lesson>> lessons, QString teacher);
+        Lesson(QString id, QString name, QString teacher);
+        Lesson(QString name, QString teacher);
+        static QList<QPointer<Lesson>> filter_by_name(const QList<QPointer<Lesson>>& lessons, const QString& name);
+        static QList<QPointer<Lesson>> filter_by_teacher(const QList<QPointer<Lesson>>& lessons, const QString& teacher);
     signals:
 
     private:
 };
 
-QDebug inline operator<<(QDebug d, const QPointer<Lesson> f) {
+QDebug inline operator<<(QDebug d, const QPointer<Lesson>& f) {
     QDebug nsp = d.nospace();
     nsp << "Lesson(name=" << f->name << ", teacher=" << f->teacher << ", video_size=" << f->videos.size();
     nsp << "\n";

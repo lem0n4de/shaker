@@ -9,14 +9,14 @@ class Video : public QObject
 {
         Q_OBJECT
     public:
-        Video(const QString id, const QString name, const QString teacher, const QString url);
-        Video(const QString name, const QString teacher, const QString url);
+        Video(QString id, QString name, QString teacher, QString url);
+        Video(QString name, QString teacher, QString url);
         QString name;
         QString teacher;
         QString url;
         QString id;
         QString lesson_name;
-        bool operator==(Video const& rhs);
+        bool operator==(Video const& rhs) const;
 
     signals:
 };

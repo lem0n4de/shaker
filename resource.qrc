@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>assets/cross.svg</file>
+        <file>assets/refresh.svg</file>
     </qresource>
 </RCC>

@@ -1,11 +1,9 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 
-#include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
-#include <QListWidget>
 #include <QListWidgetItem>
 #include <QMessageBox>
 #include <QWebEngineView>
@@ -15,52 +13,58 @@
 #include <iostream>
 #include <QComboBox>
 #include <QStatusBar>
-#include <QLabel>
 #include <liverecordingscraper.h>
 #include <scraper.h>
 
 using namespace std::string_literals;
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+MainWindow::MainWindow(QWidget* parent)
+        : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     this->setWindowTitle("Shaker");
     this->loadLessonsFromFile();
     this->download_list_dialog = new DownloadListDialog(this);
 
-    connect(&this->downloader, &Downloader::downloadProgress, this->download_list_dialog, &DownloadListDialog::download_progress);
-    connect(&this->downloader, &Downloader::downloadFinished, this->download_list_dialog, &DownloadListDialog::download_finished);
+    connect(&this->downloader, &Downloader::downloadProgress, this->download_list_dialog,
+            &DownloadListDialog::download_progress);
+    connect(&this->downloader, &Downloader::downloadFinished, this->download_list_dialog,
+            &DownloadListDialog::download_finished);
     connect(this, &MainWindow::start_download, this->download_list_dialog, &DownloadListDialog::download_started);
     connect(this, &MainWindow::start_download, &this->downloader, &Downloader::add_download);
     connect(this->download_list_dialog, &DownloadListDialog::cancel_download,
-                    &this->downloader, &Downloader::download_cancelled);
+            &this->downloader, &Downloader::download_cancelled);
 
     QStringList lesson_names;
-    for (const auto& lesson: this->lessons) {
+    for (const auto &lesson: this->lessons)
+    {
         auto f = lesson_names.filter(lesson->name);
         if (f.empty()) lesson_names.append(lesson->name);
     }
 
-    for (const auto &name : lesson_names) {
+    for (const auto &name: lesson_names)
+    {
         auto v = Lesson::filter_by_name(this->lessons, name);
-        if (!v.empty()) {
-            if (v.size() > 1) {
+        if (!v.empty())
+        {
+            if (v.size() > 1)
+            {
                 // multiple teachers
-                QVBoxLayout* layout = new QVBoxLayout;
-                QComboBox* comboBox = new QComboBox;
-                for (auto&& lesson: v) {
+                auto layout = new QVBoxLayout;
+                auto comboBox = new QComboBox;
+                for (auto &&lesson: v)
+                {
                     comboBox->addItem(lesson->teacher);
                 }
                 connect(comboBox, &QComboBox::currentTextChanged, this, &MainWindow::combobox_changed);
                 QListWidget* l = this->buildListWidgetForLesson(v[0]);
                 layout->addWidget(comboBox);
                 layout->addWidget(l);
-                QWidget* w = new QWidget;
+                auto w = new QWidget;
                 w->setLayout(layout);
                 ui->tabWidget->addTab(w, name);
-            } else {
+            } else
+            {
                 // single teacher
                 auto lesson = v[0];
                 auto l = this->buildListWidgetForLesson(lesson);
@@ -79,23 +83,27 @@ MainWindow::~MainWindow()
 
 void MainWindow::loadLessonsFromFile()
 {
-    try {
+    try
+    {
         this->lessons = JsonDatabase::retrieve_lessons();
-    } catch (std::invalid_argument& e) {
+    } catch (std::invalid_argument &e)
+    {
         QMessageBox::critical(this, tr("Error"), tr(e.what()));
     }
 }
 
-QListWidget* MainWindow::buildListWidgetForLesson(QPointer<Lesson> lesson, QString objectName)
+QListWidget* MainWindow::buildListWidgetForLesson(const QPointer<Lesson> &lesson, QString objectName) const
 {
-    QListWidget* l = new QListWidget;
-    for (const auto& video : lesson->videos) {
-        QListWidgetItem* item = new QListWidgetItem;
+    auto l = new QListWidget;
+    for (const auto &video: lesson->videos)
+    {
+        auto item = new QListWidgetItem;
         item->setText(video->name);
         item->setCheckState(Qt::CheckState::Unchecked);
         l->addItem(item);
     }
-    if (objectName == nullptr) {
+    if (objectName == nullptr)
+    {
         objectName = lesson->name + "list";
     }
     l->setObjectName(objectName);
@@ -111,11 +119,15 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::list_item_state_changed(QListWidgetItem* item)
 {
-    if (item->checkState() == Qt::CheckState::Checked) {
+    if (item->checkState() == Qt::CheckState::Checked)
+    {
         bool found = false;
-        for (const auto& l: this->lessons) {
-            for (const auto& v: l->videos) {
-                if (v->name == item->text()) {
+        for (const auto &l: this->lessons)
+        {
+            for (const auto &v: l->videos)
+            {
+                if (v->name == item->text())
+                {
                     this->videos_to_download.push_back(v);
                     found = true;
 //                    qDebug() << "Added " << item->text() << " to download list";
@@ -124,40 +136,42 @@ void MainWindow::list_item_state_changed(QListWidgetItem* item)
             }
             if (found) break;
         }
-    }
-    else if (item->checkState() == Qt::CheckState::Unchecked) {
-        int rv = this->videos_to_download.removeIf([item] (QPointer<Video> v) { return v->name == item->text(); });
-//        if (rv>0)
-//            qDebug() << "Removed " << item->text() << " from download list";
+    } else if (item->checkState() == Qt::CheckState::Unchecked)
+    {
+        this->videos_to_download.removeIf([item](const QPointer<Video> &v) { return v->name == item->text(); });
     }
 }
 
 
 void MainWindow::on_download_button_clicked()
 {
-    if (!videos_to_download.empty()) {
+    if (!videos_to_download.empty())
+    {
         emit start_download(videos_to_download);
     }
 }
 
-void MainWindow::combobox_changed(QString text)
+void MainWindow::combobox_changed(const QString &text)
 {
     int i = ui->tabWidget->currentIndex();
     QString t = ui->tabWidget->tabText(i);
     auto l = Lesson::filter_by_name(this->lessons, t);
-    auto lessons = Lesson::filter_by_teacher(l, text);
+    auto _lessons = Lesson::filter_by_teacher(l, text);
 
-    if (lessons.size() != 1) {
+    if (_lessons.size() != 1)
+    {
         return;
     }
-    auto lesson = lessons[0];
-    QListWidget* listW = ui->tabWidget->findChild<QListWidget*>(lesson->name + "list");
-    if (listW == nullptr) {
+    auto lesson = _lessons[0];
+    auto listW = ui->tabWidget->findChild<QListWidget*>(lesson->name + "list");
+    if (listW == nullptr)
+    {
         return;
     }
     listW->clear();
-    for (const auto& video: lesson->videos) {
-        QListWidgetItem* item = new QListWidgetItem;
+    for (const auto &video: lesson->videos)
+    {
+        auto item = new QListWidgetItem;
         item->setText(video->name);
         item->setCheckState(Qt::CheckState::Unchecked);
         listW->addItem(item);
@@ -175,9 +189,10 @@ void MainWindow::on_action_show_download_list_dialog_triggered()
     this->download_list_dialog->show();
 }
 
-void MainWindow::on_new_video_scraped(QPointer<Video> video)
+void MainWindow::on_new_video_scraped(const QPointer<Video> &video)
 {
-    this->ui->statusbar->showMessage(tr("Got url of [") + video->lesson_name + "(" + video->teacher + ") : " + video->name + "]");
+    this->ui->statusbar->showMessage(
+            tr("Got url of [") + video->lesson_name + "(" + video->teacher + ") : " + video->name + "]");
 }
 
 
@@ -194,11 +209,13 @@ void MainWindow::on_action_change_download_location_triggered()
 
 void MainWindow::on_action_recorded_lesson_refresh_triggered()
 {
-    if (this->live_recording_scraper && this->live_recording_scraper->is_scraping()) {
+    if (this->live_recording_scraper && this->live_recording_scraper->is_scraping())
+    {
         QMessageBox::critical(this, tr("Hata"), "Canlı dersler güncelleniyor, lütfen daha sonra tekrar deneyin.");
         return;
     }
-    if (!this->scraper) {
+    if (!this->scraper)
+    {
         this->scraper = new Scraper(this);
         connect(this->scraper, &Scraper::new_video_scraped, this, &MainWindow::on_new_video_scraped);
     }
@@ -208,13 +225,16 @@ void MainWindow::on_action_recorded_lesson_refresh_triggered()
 
 void MainWindow::on_action_live_lesson_refresh_triggered()
 {
-    if (this->scraper && this->scraper->is_scraping()) {
+    if (this->scraper && this->scraper->is_scraping())
+    {
         QMessageBox::critical(this, tr("Hata"), "Kayıtlı dersler güncelleniyor, lütfen daha sonra tekrar deneyin.");
         return;
     }
-    if (!this->live_recording_scraper) {
+    if (!this->live_recording_scraper)
+    {
         this->live_recording_scraper = new LiveRecordingScraper(this);
-        connect(this->live_recording_scraper, &LiveRecordingScraper::new_video_scraped, this, &MainWindow::on_new_video_scraped);
+        connect(this->live_recording_scraper, &LiveRecordingScraper::new_video_scraped, this,
+                &MainWindow::on_new_video_scraped);
     }
     this->live_recording_scraper->scrape();
 }

@@ -60,7 +60,7 @@ Scraper::~Scraper()
     delete ui;
 }
 
-bool Scraper::is_scraping()
+bool Scraper::is_scraping() const
 {
     return this->_working;
 }
@@ -181,7 +181,7 @@ void Scraper::_on_start_video_scrape_of_hc_atf_lesson()
 
     QList<TeacherLesson> _list = this->build_remaining_lesson_list();
 
-    if (_list.size() > 0) {
+    if (!_list.empty()) {
         this->current_lesson.first = _list[0];
         _list.pop_front();
         auto lesson = new Lesson(this->current_lesson.first.name, this->current_lesson.first.teacher);
@@ -209,7 +209,7 @@ void Scraper::_on_start_video_scrape_of_non_hc_atf_lesson()
     }
     QList<TeacherLesson> _list = this->build_remaining_lesson_list();
 
-    if (_list.size() > 0) {
+    if (!_list.empty()) {
         this->current_lesson.first = _list[0];
         _list.pop_front();
         auto lesson = new Lesson(this->current_lesson.first.name, this->current_lesson.first.teacher);
@@ -349,7 +349,7 @@ void Scraper::scrape_video_of_hc_atf_lesson_and_click_next_lesson()
 
             emit this->new_video_scraped(video);
             this->current_lesson.first.video_infos.pop_front();
-            if (this->current_lesson.first.video_infos.size() > 0) {
+            if (!this->current_lesson.first.video_infos.empty()) {
                 this->click_element_by_id(this->current_lesson.first.video_infos[0].id);
                 qInfo() << this->current_lesson.first.video_infos.size() + 1 << " videos left";
             } else {
@@ -380,7 +380,7 @@ void Scraper::scrape_video_of_non_hc_atf_lesson_and_click_next_lesson()
 
             emit this->new_video_scraped(video);
             this->current_lesson.first.video_infos.pop_front();
-            if (this->current_lesson.first.video_infos.size() > 0) {
+            if (!this->current_lesson.first.video_infos.empty()) {
                 this->click_element_by_id(this->current_lesson.first.video_infos[0].id);
                 qInfo() << this->current_lesson.first.video_infos.size() + 1 << " videos left";
             } else {
@@ -392,7 +392,7 @@ void Scraper::scrape_video_of_non_hc_atf_lesson_and_click_next_lesson()
     });
 }
 
-void Scraper::click_element_by_id(QString id)
+void Scraper::click_element_by_id(const QString& id)
 {
     this->page->runJavaScript("document.getElementById('" + id + "').click();");
 }
@@ -403,7 +403,7 @@ QList<TeacherLesson> Scraper::build_remaining_lesson_list()
     for (auto&& l: this->teacher_lessons) {
         auto it = std::find_if(this->finished_lessons.begin(),
                                this->finished_lessons.end(),
-                               [this,l ] (QPointer<Lesson> pLesson) {
+                               [l] (const QPointer<Lesson>& pLesson) {
                   return pLesson->name == l.name && pLesson->teacher == l.teacher;
         });
         if (it != this->finished_lessons.end()) continue;
@@ -430,7 +430,7 @@ void Scraper::closeEvent(QCloseEvent* event)
  * @param timeout in seconds
  */
 template<typename Functor, typename OnError>
-void Scraper::wait_for_element_to_appear(QString selector, Functor callback, OnError on_error, unsigned int timeout)
+void Scraper::wait_for_element_to_appear(const QString& selector, Functor callback, OnError on_error, unsigned int timeout)
 {
     auto max_tries = timeout / 1;
     auto timer = new QTimer(this);
@@ -443,7 +443,7 @@ void Scraper::wait_for_element_to_appear(QString selector, Functor callback, OnE
             return;
         } else count += 1;
         page->runJavaScript("document.querySelector('" + selector + "');", 0,
-                            [this, callback, timer] (const QVariant& out) mutable {
+                            [callback, timer] (const QVariant& out) mutable {
             if (out.isValid()) {
                 timer->stop();
                 callback(out);

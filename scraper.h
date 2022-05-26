@@ -20,8 +20,8 @@ class Scraper : public QMainWindow
     public:
         explicit Scraper(QWidget *parent = nullptr);
         void scrape();
-        ~Scraper();
-        bool is_scraping();
+        ~Scraper() override;
+        [[nodiscard]] bool is_scraping() const;
 
     public slots:
         void loading_finished();
@@ -49,19 +49,18 @@ class Scraper : public QMainWindow
 
     private:
         Ui::Scraper *ui;
-        QWebEngineProfile* profile;
-        QWebEnginePage* page;
+        QWebEngineProfile* profile = nullptr;
+        QWebEnginePage* page = nullptr;
         QList<std::pair<QString, QString>> lessons_to_scrape; // id, text without teachers
         QList<TeacherLesson> teacher_lessons; // lessons with teachers
         std::pair<QString, QString> searching_lesson_id_and_title; // id, text without teacher
         bool lesson_names_scraped = false;
         bool _working = false;
 
-        typedef void (Scraper::*video_scraper)(void);
-        video_scraper ongoing_video_scraping_function;
+        typedef void (Scraper::*video_scraper)();
+        video_scraper ongoing_video_scraping_function = nullptr;
 
         std::pair<TeacherLesson, QPointer<Lesson>> current_lesson;
-        QList<TeacherLesson> teacher_lessons_with_video_info;
         QList<QPointer<Lesson>> finished_lessons;
         bool ongoing_video_scraping = false;
 
@@ -69,10 +68,10 @@ class Scraper : public QMainWindow
         void get_video_names_for_current_lesson();
         void scrape_video_of_hc_atf_lesson_and_click_next_lesson();
         void scrape_video_of_non_hc_atf_lesson_and_click_next_lesson();
-        void click_element_by_id(QString id);
+        void click_element_by_id(const QString& id);
         QList<TeacherLesson> build_remaining_lesson_list();
         template<typename Functor, typename OnError>
-        void wait_for_element_to_appear(QString selector, Functor callback, OnError on_error, unsigned int timeout = 30);
+        void wait_for_element_to_appear(const QString& selector, Functor callback, OnError on_error, unsigned int timeout = 30);
         template<typename Functor>
         void wait_for_element_to_appear(QString selector, Functor callback, unsigned int timeout = 30);
 

@@ -24,8 +24,8 @@ class LiveRecordingScraper : public QMainWindow
 
     public:
         explicit LiveRecordingScraper(QWidget *parent = nullptr);
-        ~LiveRecordingScraper();
-        bool is_scraping();
+        ~LiveRecordingScraper() override;
+        [[nodiscard]] bool is_scraping() const;
         void scrape();
 
     private slots:
@@ -37,13 +37,6 @@ class LiveRecordingScraper : public QMainWindow
         void _on_finished();
 
     signals:
-        /*
-         * scrape start
-         * lesson names acquired -> start new lesson -> get_next_video_info ->
-         * acquired_new_video -> get_next_video_info ->
-         * lesson done
-         * scrape done
-         */
         void started();
         void new_video_scraped(QPointer<Video> video);
         void acquired_lesson_names(); // start new lesson
@@ -54,47 +47,46 @@ class LiveRecordingScraper : public QMainWindow
 
     private:
         Ui::LiveRecordingScraper *ui;
-        QWebEngineProfile* profile;
-        QWebEnginePage* page;
+        QWebEngineProfile* profile = nullptr;
+        QWebEnginePage* page = nullptr;
         QList<std::pair<TeacherLesson, QPointer<Lesson>>> lesson_list;
         std::pair<TeacherLesson, QPointer<Lesson>> current_lesson;
         bool lesson_names_scraped();
 
         void scrape_video();
 
-        inline static const QString VIDEO_PAGE_DERSLER_LISTESI_CLASS_NAME = QStringLiteral("DerslerListesi");
-        inline static const QString VIDEO_PAGE_URL_PATH = QStringLiteral("CanliVideoDersleri");
-        inline static const QString VIDEO_PAGE_URL_PATH_2 = QStringLiteral("CanliDersBolum");
+        static QString video_page_dersler_listesi_class_name() { return QStringLiteral("DerslerListesi"); }
+        static QString video_page_url_path() { return QStringLiteral("CanliVideoDersleri"); }
+        static QString video_page_url_path_2() { return QStringLiteral("CanliDersBolum"); }
+
         void scrape_video_names();
 
-        inline static const QString LESSON_LIST_PAGE_URL_PATH = QStringLiteral("CanliVideoKategori");
-        inline static const QString LESSON_LIST_PAGE_BTNS_CLASS_NAME = QStringLiteral("PnlIzle");
+        static QString lesson_list_page_url_path() { return QStringLiteral("CanliVideoKategori"); }
+        static QString lesson_list_page_buttons_class_name() { return QStringLiteral("PnlIzle"); }
         void scrape_lesson_list_page();
 
-        inline static const QString ONLINE_KONU_ANLATIMLARI_URL_PATH = QStringLiteral("CanliVideoAnaKategoriAlti");
-        inline static const QString ONLINE_KONU_ANLATIMLARI_BTN_CLASS_NAME = QStringLiteral("VdDrKaSub");
-        inline static const QString ONLINE_KONU_ANLATIMLARI_SEARCH_STRING_1 = QStringLiteral("Konu Anlatımları");
-        inline static const QString ONLINE_KONU_ANLATIMLARI_SEARCH_STRING_2 = QStringLiteral("DUS");
+        static QString online_konu_anlatimlari_url_path() { return QStringLiteral("CanliVideoAnaKategoriAlti"); }
+        static QString online_konu_anlatimlari_button_class_name() { return QStringLiteral("VdDrKaSub"); }
+        static QString online_konu_anlatimlari_search_string_1() { return QStringLiteral("Konu Anlatımları"); }
+        static QString online_konu_anlatimlari_search_string_2() { return QStringLiteral("DUS"); }
         void nav_online_konu_anlatimlari();
 
-        inline static const QString CANLI_DERS_KATEGORI_URL_PATH = QStringLiteral("CanliDersKategori");
-        inline static const QString CANLI_DERS_KATEGORI_BUTON_CLASS = QStringLiteral("VdCanliDersler");
-        inline static const QString CANLI_DERS_KATEGORI_SEARCH_STRING = QStringLiteral("Canlı Ders Kayıtları");
+        static QString canli_ders_kategori_url_path() { return QStringLiteral("CanliDersKategori"); }
+        static QString canli_ders_kategori_button_class_name() { return QStringLiteral("VdCanliDersler"); }
+        static QString canli_ders_kategori_search_string() { return QStringLiteral("Canlı Ders Kayıtları"); }
         void nav_canli_ders_dategori();
 
-        inline static const QString ANASAYFA_CANLI_DERSLER_BUTON_CLASS = QStringLiteral("VdRnkCn");
-        inline static const QString ANASAYFA_URL_PATH = QStringLiteral("Anasayfa");
+        static QString anasayfa_canli_dersler_button_class() { return QStringLiteral("VdRnkCn"); }
+        static QString anasayfa_url_path() { return QStringLiteral("Anasayfa"); }
         void nav_anasayfa();
 
 
         bool working = false;
 
         template<typename Functor, typename OnError>
-        void wait_for_element_to_appear(QString selector, Functor callback, OnError on_error, unsigned int timeout = 30);
+        void wait_for_element_to_appear(const QString& selector, Functor callback, OnError on_error, unsigned int timeout = 30);
         template<typename Functor>
         void wait_for_element_to_appear(QString selector, Functor callback, unsigned int timeout = 30);
-
-        void enable_javascript(bool enable);
 
 
     protected:

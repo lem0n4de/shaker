@@ -22,16 +22,16 @@ class MainWindow : public QMainWindow
         Q_OBJECT
 
     public:
-        MainWindow(QWidget *parent = nullptr);
-        ~MainWindow();
+        explicit MainWindow(QWidget *parent = nullptr);
+        ~MainWindow() override;
 
     private slots:
         void on_actionExit_triggered();
         void list_item_state_changed(QListWidgetItem* item);
         void on_download_button_clicked();
-        void combobox_changed(QString text);
+        void combobox_changed(const QString& text);
         void on_action_show_download_list_dialog_triggered();
-        void on_new_video_scraped(QPointer<Video> video);
+        void on_new_video_scraped(const QPointer<Video>& video);
 
         void on_action_change_download_location_triggered();
         void on_action_recorded_lesson_refresh_triggered();
@@ -52,8 +52,7 @@ class MainWindow : public QMainWindow
         Downloader downloader;
         void closeEvent(QCloseEvent *event) override;
         void loadLessonsFromFile();
-        QListWidget* buildListWidgetForLesson(QPointer<Lesson> lesson, QString objectName = nullptr);
+        QListWidget* buildListWidgetForLesson(const QPointer<Lesson>& lesson, QString objectName = nullptr) const;
         DownloadListDialog* download_list_dialog;
-        QWidget* statusbar_textbox;
 };
 #endif // MAINWINDOW_H

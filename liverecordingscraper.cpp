@@ -2,11 +2,11 @@
 #include "ui_liverecordingscraper.h"
 
 #include <QTimer>
-#include <QNetworkCookie>
 #include <QWebEngineCookieStore>
 #include <QWebEngineSettings>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <utility>
 #include <jsondatabase.h>
 
 LiveRecordingScraper::LiveRecordingScraper(QWidget *parent) :
@@ -28,7 +28,7 @@ LiveRecordingScraper::~LiveRecordingScraper()
     delete ui;
 }
 
-bool LiveRecordingScraper::is_scraping()
+bool LiveRecordingScraper::is_scraping() const
 {
     return this->working;
 }
@@ -43,36 +43,30 @@ void LiveRecordingScraper::scrape()
     this->profile = new QWebEngineProfile(this);
     this->profile->setHttpUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 11_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1 Safari/605.1.15");
 
-    auto cookie = QNetworkCookie("ASP.NET_SessionId", "f42gxbwtea1nzcy3250pr32w");
-    cookie.setDomain("tusworld.com.tr");
-    this->profile->cookieStore()->setCookie(cookie);
-//    // END for now
     this->page = new QWebEnginePage(profile, this);
     connect(page, &QWebEnginePage::loadFinished, this, &LiveRecordingScraper::loading_finished);
     ui->webEngineView->setPage(page);
 
-//    page->load(QUrl("https://www.tusworld.com.tr/UyeGirisi"));
-    //     for now
-    this->page->load(QUrl("https://www.tusworld.com.tr/Anasayfa"));
-    // END for now
+    page->load(QUrl("https://www.tusworld.com.tr/UyeGirisi"));
 }
 
 void LiveRecordingScraper::loading_finished()
 {
     auto url = this->page->url();
     qDebug() << "URL ==" << url.toDisplayString();
-    if (url.path().contains(this->ANASAYFA_URL_PATH)) {
+    if (url.path().contains(LiveRecordingScraper::anasayfa_url_path())) {
         this->nav_anasayfa();
-    } else if (url.path().contains(this->CANLI_DERS_KATEGORI_URL_PATH)) {
+    } else if (url.path().contains(LiveRecordingScraper::canli_ders_kategori_url_path())) {
         this->nav_canli_ders_dategori();
-    } else if (url.path().contains(this->ONLINE_KONU_ANLATIMLARI_URL_PATH)) {
+    } else if (url.path().contains(LiveRecordingScraper::online_konu_anlatimlari_url_path())) {
         this->nav_online_konu_anlatimlari();
-    } else if (url.path().contains(this->LESSON_LIST_PAGE_URL_PATH)) {
+    } else if (url.path().contains(LiveRecordingScraper::lesson_list_page_url_path())) {
         if (this->lesson_names_scraped())
             this->start_new_lesson();
         else
             this->scrape_lesson_list_page();
-    } else if (url.path().contains(this->VIDEO_PAGE_URL_PATH) || url.path().contains(this->VIDEO_PAGE_URL_PATH_2)) {
+    } else if (url.path().contains(LiveRecordingScraper::video_page_url_path())
+            || url.path().contains(LiveRecordingScraper::video_page_url_path_2())) {
         if (this->current_lesson.first.is_started() &&
             this->current_lesson.first.video_infos.empty() &&
             !this->current_lesson.first.is_ended())
@@ -83,7 +77,7 @@ void LiveRecordingScraper::loading_finished()
 
 void LiveRecordingScraper::_on_acquired_new_video(QString name, QString src)
 {
-    QPointer<Video> v = new Video(name, "", src);
+    QPointer<Video> v = new Video(std::move(name), "", std::move(src));
     emit this->new_video_scraped(v);
     this->current_lesson.second->videos.push_back(v);
     qDebug() << this->current_lesson.first.video_infos.size() << " videos left";
@@ -92,7 +86,7 @@ void LiveRecordingScraper::_on_acquired_new_video(QString name, QString src)
 
 void LiveRecordingScraper::_on_finished_lesson()
 {
-    this->page->load(QUrl("https://www.tusworld.com.tr/" + this->LESSON_LIST_PAGE_URL_PATH));
+    this->page->load(QUrl("https://www.tusworld.com.tr/" + LiveRecordingScraper::lesson_list_page_url_path()));
 }
 
 void LiveRecordingScraper::_on_finished()
@@ -116,7 +110,7 @@ void LiveRecordingScraper::start_new_lesson()
 {
     auto it = std::find_if(this->lesson_list.begin(),
                            this->lesson_list.end(),
-                           [this] (std::pair<TeacherLesson, QPointer<Lesson>> pair) {
+                           [] (const std::pair<TeacherLesson, QPointer<Lesson>>& pair) {
               return pair.first.video_infos.empty() && pair.second->videos.empty();
 });
     if (it == this->lesson_list.end()) {
@@ -163,7 +157,7 @@ void LiveRecordingScraper::scrape_video_names()
     qDebug() << "scrape_video_names";
     auto js = QString("(function() {"
                       "     let videos = [];"
-                      "     let d_l = document.getElementsByClassName('" + this->VIDEO_PAGE_DERSLER_LISTESI_CLASS_NAME + "')[0].getElementsByTagName('a');"
+                      "     let d_l = document.getElementsByClassName('" + LiveRecordingScraper::video_page_dersler_listesi_class_name() + "')[0].getElementsByTagName('a');"
                       "     for (let el of d_l) {"
                       "         videos.push({"
                       "             name: el.textContent.trim(),"
@@ -193,7 +187,7 @@ void LiveRecordingScraper::scrape_lesson_list_page()
 {
     auto js = QString("(function () {"
                       "     let lessons = [];"
-                      "     for (let item of document.getElementsByClassName('"+ this->LESSON_LIST_PAGE_BTNS_CLASS_NAME + "')) {"
+                      "     for (let item of document.getElementsByClassName('"+ LiveRecordingScraper::lesson_list_page_buttons_class_name() + "')) {"
                       "         let c = item.textContent.trim();"
                       "         let id = item.id;"
                       "         lessons.push([id, c]);"
@@ -217,10 +211,10 @@ void LiveRecordingScraper::scrape_lesson_list_page()
 void LiveRecordingScraper::nav_online_konu_anlatimlari()
 {
     auto js = QString("(function () {"
-                      "     let elements = document.getElementsByClassName('" + this->ONLINE_KONU_ANLATIMLARI_BTN_CLASS_NAME + "');"
+                      "     let elements = document.getElementsByClassName('" + LiveRecordingScraper::online_konu_anlatimlari_button_class_name() + "');"
                       "     for (let item of elements) {"
-                      "         if (item.textContent.trim().includes('" + this->ONLINE_KONU_ANLATIMLARI_SEARCH_STRING_1 + "') "
-                                    "&& !item.textContent.trim().includes('" + this->ONLINE_KONU_ANLATIMLARI_SEARCH_STRING_2 + "')) {"
+                      "         if (item.textContent.trim().includes('" + LiveRecordingScraper::online_konu_anlatimlari_search_string_1() + "') "
+                                    "&& !item.textContent.trim().includes('" + LiveRecordingScraper::online_konu_anlatimlari_search_string_2() + "')) {"
                       "             item.getElementsByTagName('a')[0].click();"
                       "         }"
                       "     }"
@@ -232,33 +226,24 @@ void LiveRecordingScraper::nav_online_konu_anlatimlari()
 void LiveRecordingScraper::nav_canli_ders_dategori()
 {
     auto js = QString("(function () {"
-                      "     let els = document.getElementsByClassName('" + this->CANLI_DERS_KATEGORI_BUTON_CLASS + "');"
+                      "     let els = document.getElementsByClassName('" + LiveRecordingScraper::canli_ders_kategori_button_class_name() + "');"
                       "     for (let item of els) {"
-                      "         if (item.textContent.trim().includes('" + this->CANLI_DERS_KATEGORI_SEARCH_STRING + "')) {"
+                      "         if (item.textContent.trim().includes('" + LiveRecordingScraper::canli_ders_kategori_search_string() + "')) {"
                       "             item.getElementsByTagName('a')[0].click();"
                       "             return;"
                       "         }"
                       "     }"
                       "})();");
-    this->wait_for_element_to_appear("." + this->CANLI_DERS_KATEGORI_BUTON_CLASS, [this, js] (const QVariant& out) {
+    this->wait_for_element_to_appear("." + LiveRecordingScraper::canli_ders_kategori_button_class_name(), [this, js] (const QVariant& out) {
         this->page->runJavaScript(js);
     });
 }
 
 void LiveRecordingScraper::nav_anasayfa()
 {
-    auto js = QString("document.getElementsByClassName('" +  this->ANASAYFA_CANLI_DERSLER_BUTON_CLASS + "')[0].click();");
+    auto js = QString("document.getElementsByClassName('" +  LiveRecordingScraper::anasayfa_canli_dersler_button_class() + "')[0].click();");
     this->page->runJavaScript(js);
 }
-
-void LiveRecordingScraper::enable_javascript(bool enable)
-{
-    this->page->settings()->setAttribute(QWebEngineSettings::JavascriptEnabled, enable);
-}
-
-
-
-
 
 
 void LiveRecordingScraper::closeEvent(QCloseEvent* event)
@@ -270,15 +255,6 @@ void LiveRecordingScraper::closeEvent(QCloseEvent* event)
     QMainWindow::closeEvent(event);
 }
 
-
-
-
-
-
-
-
-
-
 /**
  * @brief Scraper::wait_for_element_to_appear
  * @param selector
@@ -286,7 +262,7 @@ void LiveRecordingScraper::closeEvent(QCloseEvent* event)
  * @param timeout in seconds
  */
 template<typename Functor, typename OnError>
-void LiveRecordingScraper::wait_for_element_to_appear(QString selector, Functor callback, OnError on_error, unsigned int timeout)
+void LiveRecordingScraper::wait_for_element_to_appear(const QString& selector, Functor callback, OnError on_error, unsigned int timeout)
 {
     auto max_tries = timeout / 1;
     auto timer = new QTimer(this);
@@ -299,7 +275,7 @@ void LiveRecordingScraper::wait_for_element_to_appear(QString selector, Functor 
             return;
         } else count += 1;
         page->runJavaScript("document.querySelector('" + selector + "');", 0,
-                            [this, callback, timer] (const QVariant& out) mutable {
+                            [callback, timer] (const QVariant& out) mutable {
             if (out.isValid()) {
                 timer->stop();
                 callback(out);

@@ -1,33 +1,29 @@
 #include "teacherlesson.h"
 
+#include <utility>
+
 
 TeacherLesson::TeacherLesson()
-    :name(""), html_id(""), teacher(""), teacher_html_id("") {}
+        : html_id(""), name(""), teacher(""), teacher_html_id("") {}
 
-TeacherLesson::TeacherLesson(const QString name, const QString html_id) : name(name), html_id(html_id) {}
+TeacherLesson::TeacherLesson(QString name, QString html_id)
+        : html_id(std::move(html_id)), name(std::move(name)) {}
 
-TeacherLesson::TeacherLesson(const QString name, const QString html_id, const QString teacher, const QString teacher_html_id)
-    : teacher_html_id(teacher_html_id), html_id(html_id), name(name), teacher(teacher) {}
-
-bool TeacherLesson::finished()
-{
-    qDebug() << "STARTED == " << this->started
-             << "ENDED == " << this->ended
-             << "VIDEOS_INFO_EMPTY == " << this->video_infos.empty();
-    return this->started && this->ended && this->video_infos.empty();
-}
+TeacherLesson::TeacherLesson(QString name, QString html_id, QString teacher, QString teacher_html_id)
+        : html_id(std::move(html_id)), name(std::move(name)), teacher(std::move(teacher)),
+          teacher_html_id(std::move(teacher_html_id)) {}
 
 void TeacherLesson::start()
 {
     this->started = true;
 }
 
-bool TeacherLesson::is_started()
+bool TeacherLesson::is_started() const
 {
     return this->started;
 }
 
-bool TeacherLesson::is_ended()
+bool TeacherLesson::is_ended() const
 {
     return this->ended;
 }
