@@ -12,5 +12,6 @@
   tabview için filtele 
 - [x] ~~Cancel downloads~~
 - [x] ~~Show retry button for downloads that errored~~
-- [ ] Add default lessons.json
+- [x] ~~Add default lessons.json~~
 - [x] ~~Delete file if download cancelled~~
+- [ ] Zippyshare uploading

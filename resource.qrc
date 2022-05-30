@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>assets/cross.svg</file>
         <file>assets/refresh.svg</file>
+        <file>lessons.json</file>
     </qresource>
 </RCC>

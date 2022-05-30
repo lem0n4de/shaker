@@ -57,6 +57,17 @@ QList<QPointer<Lesson> > JsonDatabase::retrieve_lessons()
     QFile inputFile(JsonDatabase::database_name());
     QList<QPointer<Lesson>> lessons;
 
+    if (!inputFile.exists()) {
+        QFile defaultFile(JsonDatabase::default_json_name());
+        defaultFile.open(QIODevice::ReadOnly | QIODevice::Text);
+        QByteArray defaultArr = defaultFile.readAll();
+        if (inputFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            inputFile.write(defaultArr);
+        }
+        defaultFile.close();
+        inputFile.close();
+    }
+
     if (inputFile.open(QIODevice::ReadOnly | QIODevice::Text))
     {
         json_byte = inputFile.readAll();
