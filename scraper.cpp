@@ -49,10 +49,8 @@ void Scraper::scrape()
     ui->webEngineView->setPage(page);
     ui->webEngineView->showMaximized();
 
-//    page->load(QUrl("https://www.tusworld.com.tr/UyeGirisi"));
-    //     for now
-    page->load(QUrl("https://www.tusworld.com.tr/Anasayfa"));
-    // END for now
+    page->load(QUrl("https://www.tusworld.com.tr/UyeGirisi"));
+    this->show();
 }
 
 Scraper::~Scraper()
@@ -69,6 +67,8 @@ void Scraper::loading_finished()
 {
     auto url = this->page->url();
     qDebug() << "Url == " << url;
+    if (!url.path().contains("UyeGirisi")) this->hide();
+
     if (this->ongoing_video_scraping) {
         (this->*this->ongoing_video_scraping_function)();
     } else if (url.matches(QUrl("https://www.tusworld.com.tr/Anasayfa"), QUrl::None)) {

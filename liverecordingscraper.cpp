@@ -48,12 +48,15 @@ void LiveRecordingScraper::scrape()
     ui->webEngineView->setPage(page);
 
     page->load(QUrl("https://www.tusworld.com.tr/UyeGirisi"));
+    this->show();
 }
 
 void LiveRecordingScraper::loading_finished()
 {
     auto url = this->page->url();
     qDebug() << "URL ==" << url.toDisplayString();
+    if (!url.path().contains("UyeGirisi")) this->hide();
+
     if (url.path().contains(LiveRecordingScraper::anasayfa_url_path())) {
         this->nav_anasayfa();
     } else if (url.path().contains(LiveRecordingScraper::canli_ders_kategori_url_path())) {
