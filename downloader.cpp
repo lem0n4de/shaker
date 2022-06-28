@@ -35,7 +35,7 @@ void Downloader::add_download(const QList<QPointer<Video>> &videos)
         {
             // not found, its not downloading
 //            qDebug() << "Adding " << video->name << " to queue";
-            this->queue.enqueue(video);
+            this->queue.push_back(video);
         } else
         {
 //            qDebug() << video->id << "\n" << video->name << "\n" << "ALREADY DOWNLOADING";
@@ -64,7 +64,7 @@ void Downloader::_on_download_finished(const QPointer<DownloadInfo> &info)
     {
         auto req = info->response->request();
         info->response->deleteLater();
-        QPointer<QNetworkReply> reply = this->manager.get(req);
+        QPointer<QNetworkReply> reply = this->get_free_manager()->get(req);
         info->response = reply;
         /*
          * Somehow calculate speed.
@@ -91,9 +91,9 @@ void Downloader::_on_download_ready_read(const QPointer<DownloadInfo> &info)
 
 void Downloader::download()
 {
-    for (int i = 0; i < this->queue.size(); i++)
+    for (const auto &video: this->queue)
     {
-        QPointer<Video> video = this->queue.dequeue();
+        qDebug() << "Starting download of " << video->name;
 
         QDir default_downloads_dir(this->download_folder());
         QDir dir;
@@ -118,7 +118,9 @@ void Downloader::download()
         QNetworkRequest request(video->url);
         request.setRawHeader("referer", "https://tusworld.com.tr/VideoGrupDersleri");
 
-        QPointer<QNetworkReply> reply = this->manager.get(request);
+        auto man = this->get_free_manager();
+        this->increase_request_count(man);
+        QPointer<QNetworkReply> reply = man->get(request);
         QPointer<DownloadInfo> download_info = new DownloadInfo(video, file, reply);
         /*
          * Somehow calculate speed.
@@ -138,9 +140,13 @@ void Downloader::download()
         connect(reply, &QNetworkReply::readyRead, this, [this, download_info]() {
             this->_on_download_ready_read(download_info);
         });
+        connect(man, &QNetworkAccessManager::finished, this, [this, man](QNetworkReply* reply) {
+            this->decrease_request_count(man);
+        });
         this->downloading.push_back(download_info);
         // speed = (bytes of data) / (time elapsed)
     }
+    this->queue.clear();
 }
 
 QString Downloader::download_folder()
@@ -171,6 +177,50 @@ void Downloader::download_cancelled(const QPointer<Video> &video)
     this->downloading.removeOne(di);
     di->deleteLater();
     qDebug() << "Download cancelled " << di->video->name;
+}
+
+QPointer<QNetworkAccessManager> Downloader::get_free_manager()
+{
+    auto it = std::find_if(this->managers_and_counts.begin(), this->managers_and_counts.end(),
+                           [](const std::pair<QPointer<QNetworkAccessManager>, int> &pair) {
+                               if (pair.second <= 5) return true;
+                               return false;
+                           });
+
+    if (it != this->managers_and_counts.end())
+    {
+        // found
+        return (*it).first;
+    }
+    // not found
+    qDebug() << "returning new manager";
+    QPointer<QNetworkAccessManager> man = new QNetworkAccessManager;
+    this->managers_and_counts.push_back(std::pair(man, 0));
+    return man;
+}
+
+void Downloader::decrease_request_count(const QPointer<QNetworkAccessManager> &man)
+{
+    auto it = std::find_if(this->managers_and_counts.begin(), this->managers_and_counts.end(),
+                           [man](const std::pair<QPointer<QNetworkAccessManager>, int> &pair) {
+                               if (pair.first == man) return true;
+                               return false;
+                           });
+
+    if (it != this->managers_and_counts.end())
+        (*it).second -= 1;
+}
+
+void Downloader::increase_request_count(const QPointer<QNetworkAccessManager> &man)
+{
+    auto it = std::find_if(this->managers_and_counts.begin(), this->managers_and_counts.end(),
+                           [man](const std::pair<QPointer<QNetworkAccessManager>, int> &pair) {
+                               if (pair.first == man) return true;
+                               return false;
+                           });
+
+    if (it != this->managers_and_counts.end())
+        (*it).second += 1;
 }
 
 
