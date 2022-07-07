@@ -107,7 +107,15 @@ void Downloader::download()
             dir = default_downloads_dir;
         } else dir = default_downloads_dir.absoluteFilePath(video->lesson_name);
 
-        QString filename = dir.absoluteFilePath(video->name + ".mp4");
+        QString filename;
+        if (!video->teacher.isNull() || !video->teacher.isEmpty()) {
+            dir.mkpath(video->teacher);
+            QDir teacher_dir = dir.absoluteFilePath(video->teacher);
+            filename = teacher_dir.absoluteFilePath(video->name + ".mp4");
+        } else {
+            filename = dir.absoluteFilePath(video->name + ".mp4");
+        }
+
         QPointer<QFile> file = new QFile(filename);
         if (!file->open(QIODevice::WriteOnly))
         {
