@@ -184,7 +184,7 @@ void Scraper::_on_start_video_scrape_of_hc_atf_lesson()
     if (!_list.empty()) {
         this->current_lesson.first = _list[0];
         _list.pop_front();
-        auto lesson = new Lesson(this->current_lesson.first.name, this->current_lesson.first.teacher);
+        QPointer<Lesson> lesson = new Lesson(this->current_lesson.first.name, this->current_lesson.first.teacher);
         this->finished_lessons.push_back(lesson);
         this->current_lesson.second = lesson;
 
@@ -227,6 +227,8 @@ void Scraper::_on_start_video_scrape_of_non_hc_atf_lesson()
 
 void Scraper::_on_start_scrape_of_next_lesson()
 {
+    if (!this->finished_lessons.isEmpty())
+        JsonDatabase::save_lessons(this->finished_lessons);
     if (this->lessons_to_scrape.isEmpty()) {
         if (!this->finished_lessons.isEmpty()) {
             // SAVE to lessons.json

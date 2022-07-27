@@ -14,5 +14,5 @@ Video::Video(QString name, QString teacher, QString url)
 
 bool Video::operator==(const Video &rhs) const
 {
-    return this->id == rhs.id || this->name == rhs.name;
+    return this->id == rhs.id || this->url == rhs.url;
 }
