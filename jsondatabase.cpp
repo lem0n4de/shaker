@@ -4,8 +4,11 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QDir>
+#include <QMessageBox>
 
-QJsonArray get_lesson_videos_json_arr(const QPointer<Lesson>& lesson) {
+QJsonArray get_lesson_videos_json_arr(const QPointer<Lesson> &lesson)
+{
     QJsonArray v_arr;
     for (const auto &video: lesson->videos)
     {
@@ -19,12 +22,17 @@ QJsonArray get_lesson_videos_json_arr(const QPointer<Lesson>& lesson) {
 }
 
 
-QJsonArray combine_videos_of_two_lessons(const QPointer<Lesson>& l1, const QPointer<Lesson>& l2) {
+QJsonArray combine_videos_of_two_lessons(const QPointer<Lesson> &l1, const QPointer<Lesson> &l2)
+{
     QJsonArray v_arr;
-    for (const auto &video: l1->videos) {
+    for (const auto &video: l1->videos)
+    {
         auto it = std::find_if(v_arr.begin(), v_arr.end(),
-                               [video] (const QJsonValue& val) { return val["url"].toString() == video->url; });
-        if (it != v_arr.end()) {
+                               [video](const QJsonValue &val) {
+                                   return val.isObject() && val.toObject()["url"].toString() == video->url;
+                               });
+        if (it != v_arr.end())
+        {
             // already added to array
             continue;
         }
@@ -34,10 +42,14 @@ QJsonArray combine_videos_of_two_lessons(const QPointer<Lesson>& l1, const QPoin
         v_obj["url"] = video->url;
         v_arr.append(v_obj);
     }
-    for (const auto &video: l2->videos) {
+    for (const auto &video: l2->videos)
+    {
         auto it = std::find_if(v_arr.begin(), v_arr.end(),
-                               [video] (const QJsonValue& val) { return val["url"].toString() == video->url; });
-        if (it != v_arr.end()) {
+                               [video](const QJsonValue &val) {
+                                   return val.isObject() && val.toObject()["url"].toString() == video->url;
+                               });
+        if (it != v_arr.end())
+        {
             // already added to array
             continue;
         }
@@ -66,12 +78,12 @@ void JsonDatabase::save_lessons(const QList<QPointer<Lesson>> &lessons)
                 QPointer<Lesson> _lesson;
                 QJsonObject obj;
                 auto it = std::find_if(lessons_in_db.begin(), lessons_in_db.end(),
-                                       [lesson] (const QPointer<Lesson>& _lesson)
-                    {
-                        return _lesson->name == lesson->name && _lesson->teacher == lesson->teacher;
-                    }
+                                       [lesson](const QPointer<Lesson> &_lesson) {
+                                           return _lesson->name == lesson->name && _lesson->teacher == lesson->teacher;
+                                       }
                 );
-                if (it != lessons_in_db.end()) {
+                if (it != lessons_in_db.end())
+                {
                     // lesson already in db, merge video lists
                     _lesson = *it;
                     obj["id"] = lesson->id;
@@ -109,20 +121,33 @@ void JsonDatabase::save_lessons(const QList<QPointer<Lesson>> &lessons)
 
 QList<QPointer<Lesson> > JsonDatabase::retrieve_lessons()
 {
+    QList<QPointer<Lesson>> lessons;
+    QDir dir(JsonDatabase::database_dir());
+    if (!dir.mkpath(dir.absolutePath()))
+    {
+        qDebug() << "Unable to create " << dir.absolutePath()
+                 << ". Create it first then restart application.";
+        QMessageBox::critical(nullptr, "Hata",
+                              QString("%1 oluşturulamadı. Klasörü oluşturup uygulamayı tekrar başlatın.").arg(
+                                      dir.absolutePath()));
+        return lessons;
+    }
     QByteArray json_byte;
     qDebug() << "database location: " << JsonDatabase::database_name();
     QFile inputFile(JsonDatabase::database_name());
-    QList<QPointer<Lesson>> lessons;
 
-    if (!inputFile.exists()) {
+    if (!inputFile.exists())
+    {
         qDebug() << "Writing from: " << JsonDatabase::default_json_name() << " to: " << JsonDatabase::database_name();
         QFile defaultFile(JsonDatabase::default_json_name());
         defaultFile.open(QIODevice::ReadOnly | QIODevice::Text);
         QByteArray defaultArr = defaultFile.readAll();
-        if (inputFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        if (inputFile.open(QIODevice::WriteOnly | QIODevice::Text))
+        {
             qDebug() << "Wrote to " << JsonDatabase::database_name();
             inputFile.write(defaultArr);
-        } else {
+        } else
+        {
             qDebug() << "Unable to write to: " << JsonDatabase::database_name();
         }
         defaultFile.close();

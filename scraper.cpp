@@ -67,7 +67,7 @@ void Scraper::loading_finished()
 {
     auto url = this->page->url();
     qDebug() << "Url == " << url;
-    if (!url.path().contains("UyeGirisi")) this->hide();
+//    if (!url.path().contains("UyeGirisi")) this->hide();
 
     if (this->ongoing_video_scraping) {
         (this->*this->ongoing_video_scraping_function)();
@@ -325,6 +325,9 @@ void Scraper::get_video_names_for_current_lesson()
                         this->current_lesson.first.video_infos.push_back(i);
                     }
 
+                    if (this->current_lesson.first.video_infos.empty()) {
+w                        emit this->start_scrape_of_next_lesson();
+                    }
                     this->click_element_by_id(this->current_lesson.first.video_infos[0].id);
                 }
             });
@@ -350,9 +353,10 @@ void Scraper::scrape_video_of_hc_atf_lesson_and_click_next_lesson()
             qDebug() << "Scraped: " << video;
 
             emit this->new_video_scraped(video);
+            auto last_video_info = this->current_lesson.first.video_infos[0];
             this->current_lesson.first.video_infos.pop_front();
             if (!this->current_lesson.first.video_infos.empty()) {
-                this->click_element_by_id(this->current_lesson.first.video_infos[0].id);
+                this->click_element_by_id(last_video_info.id);
                 qInfo() << this->current_lesson.first.video_infos.size() + 1 << " videos left";
             } else {
                 this->ongoing_video_scraping = false;
@@ -381,9 +385,10 @@ void Scraper::scrape_video_of_non_hc_atf_lesson_and_click_next_lesson()
             qDebug() << "Scraped: " << video;
 
             emit this->new_video_scraped(video);
+            auto last_video_info = this->current_lesson.first.video_infos[0];
             this->current_lesson.first.video_infos.pop_front();
             if (!this->current_lesson.first.video_infos.empty()) {
-                this->click_element_by_id(this->current_lesson.first.video_infos[0].id);
+                this->click_element_by_id(last_video_info.id);
                 qInfo() << this->current_lesson.first.video_infos.size() + 1 << " videos left";
             } else {
                 this->ongoing_video_scraping = false;
