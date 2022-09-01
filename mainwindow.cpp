@@ -142,7 +142,8 @@ void MainWindow::list_item_state_changed(QListWidgetItem* item)
         }
     } else if (item->checkState() == Qt::CheckState::Unchecked)
     {
-        this->videos_to_download.removeIf([item](const QPointer<Video> &v) { return v->name == item->text(); });
+        std::remove_if(this->videos_to_download.begin(), this->videos_to_download.end(),
+                       [item](const QPointer<Video> &v) { return v->name == item->text(); });
     }
 }
 

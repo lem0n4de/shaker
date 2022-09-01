@@ -14,7 +14,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -g3 -O0 -DSHAKER_DEBUG
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wall -g3 -DSHAKER_DEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -Wall -O2")
 
-find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets LinguistTools WebEngineWidgets Network Svg)
+find_package(QT NAMES Qt5 REQUIRED COMPONENTS Widgets LinguistTools WebEngineWidgets Network Svg)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets LinguistTools WebEngineWidgets Network Svg)
 
 

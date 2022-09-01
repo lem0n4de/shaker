@@ -326,7 +326,7 @@ void Scraper::get_video_names_for_current_lesson()
                     }
 
                     if (this->current_lesson.first.video_infos.empty()) {
-w                        emit this->start_scrape_of_next_lesson();
+                        emit this->start_scrape_of_next_lesson();
                     }
                     this->click_element_by_id(this->current_lesson.first.video_infos[0].id);
                 }
